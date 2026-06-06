@@ -1,4 +1,13 @@
 ---------------------------------------------------------------------------------------------------
+Version: 3.0.0
+Date: 2026-06-06
+  Changes:
+    - Removed dark-matter requirement from replication recipes. Replicators now produce items using only electricity.
+    - Scaled recipe crafting time (energy_required) proportionally to calculated resource cost to balance energy usage.
+    - Disabled de-replication recipe generation.
+    - Layered custom border graphics onto replication technology research icons to distinguish them from regular research.
+    - Hidden the pure dark-matter item and removed its refining recipe from technologies and base recipes.
+---------------------------------------------------------------------------------------------------
 Version: 2.0.4
 Date: 2025-03-12
   Changes:

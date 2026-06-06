@@ -3,6 +3,66 @@ local CostSolver = require("lib.cost-solver")
 local TargetMapper = require("lib.target-mapper")
 local gprefix = "dmrsa-"
 
+-- Helper to layer appropriate border graphic on dynamic replication technology icons
+local function get_tech_icons(name, target, tier)
+    local border = "tech-device" .. tier
+    if tier < 2 or tier > 5 then
+        border = "tech-device2"
+    end
+
+    local subgroup = target.subgroup or ""
+    local type_name = target.type or ""
+
+    if type_name == "fluid" then
+        border = "tech-chemical"
+    elseif string.find(name, "ore") or string.find(subgroup, "ore") or subgroup == "raw-resource" then
+        border = "tech-ore"
+    elseif string.find(name, "science%-pack") then
+        border = "tech-science"
+    elseif string.find(name, "module") or subgroup == "module" then
+        border = "tech-module"
+    elseif string.find(name, "plate") or string.find(name, "alloy") then
+        border = "tech-alloy"
+    end
+
+    local border_path = "__dark-matter-replicators-space-age__/graphics/icons/borders/" .. border .. ".png"
+
+    local icons = {}
+    -- Base layer: Border (128x128)
+    table.insert(icons, {
+        icon = border_path,
+        icon_size = 128,
+        scale = 1
+    })
+
+    -- Overlay layer: Item icon(s) scaled to fit in 64x64 inside 128x128 border
+    if target.icons and #target.icons > 0 then
+        for _, icon_spec in ipairs(target.icons) do
+            local spec = helpers.deep_copy(icon_spec)
+            local isize = spec.icon_size or target.icon_size or 64
+            
+            local current_scale = spec.scale or 1
+            spec.scale = current_scale * (64 / isize)
+            
+            if spec.shift then
+                spec.shift = { spec.shift[1] * (64 / isize), spec.shift[2] * (64 / isize) }
+            end
+            
+            table.insert(icons, spec)
+        end
+    else
+        local icon_path = target.icon or "__dark-matter-replicators-space-age__/graphics/icons/tenemut.png"
+        local isize = target.icon_size or 64
+        table.insert(icons, {
+            icon = icon_path,
+            icon_size = isize,
+            scale = 64 / isize
+        })
+    end
+
+    return icons
+end
+
 local DynamicGenerator = {}
 
 -- Main entry point to run the dynamic generation
@@ -22,7 +82,7 @@ function DynamicGenerator.generate()
 
     -- Retrieve settings safely
     local fluid_qty = helpers.get_startup_setting("replication-fluid-quantity", 25)
-    local return_ratio = helpers.get_startup_setting("dmrsa-dereplication-ratio", 0.5)
+    local return_ratio = 0 -- Disabled since replication requires no dark-matter input
     local use_individual_techs = helpers.get_startup_setting("dmrsa-individual-techs", true)
 
     -- Track recipes to unlock via baseline replication technologies (fallback when individual techs is disabled)
@@ -114,10 +174,8 @@ function DynamicGenerator.generate()
                     }
                 },
                 category = category,
-                energy_required = time_cost,
-                ingredients = {
-                    { type = "item", name = gprefix .. "dark-matter", amount = dark_matter_cost }
-                },
+                energy_required = dark_matter_cost,
+                ingredients = {},
                 results = {
                     { type = target.type == "fluid" and "fluid" or "item", name = name, amount = result_amount }
                 },
@@ -291,20 +349,9 @@ function DynamicGenerator.generate()
                     order = "a-r-" .. tier .. "[" .. name .. "]"
                 }
 
-                -- Clone icon metadata safely
-                if target.icons then
-                    tech_proto.icons = helpers.deep_copy(target.icons)
-                    tech_proto.icon_size = target.icon_size or 64
-                elseif target.icon then
-                    tech_proto.icon = target.icon
-                    tech_proto.icon_size = target.icon_size or 64
-                    if target.icon_mipmaps then
-                        tech_proto.icon_mipmaps = target.icon_mipmaps
-                    end
-                else
-                    tech_proto.icon = "__dark-matter-replicators-space-age__/graphics/icons/tenemut.png"
-                    tech_proto.icon_size = 64
-                end
+                -- Layer custom border on technology icons
+                tech_proto.icons = get_tech_icons(name, target, tier)
+                tech_proto.icon_size = 128
 
                 data:extend({ tech_proto })
                 tech_count = tech_count + 1

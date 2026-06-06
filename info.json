@@ -5,7 +5,7 @@
   "title": "Dark Matter Replicators Space Age",
   "author": "Honktown, Nihilistzsche, Jaer985",
   "homepage": "https://github.com/nihilistzsche/dark-matter-replicators-space-age",
-  "description": "Adds replicators that produce items using electricity and Dark Matter. Features dynamic recipe generation, specialized planetary replicators, individual technology research trees for every item, de-replication recycling, and customizable balancing calculations. Fully optimized for high UPS.",
+  "description": "Adds replicators that produce items using electricity. Features dynamic recipe generation, specialized planetary replicators, individual technology research trees for every item with layered custom border graphics, and customizable balancing calculations. Fully optimized for high UPS.",
   "dependencies": [
     "base",
     "? space-age",

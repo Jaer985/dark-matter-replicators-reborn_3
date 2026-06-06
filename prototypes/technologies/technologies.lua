@@ -50,7 +50,6 @@ data:extend({
         icon = "__dark-matter-replicators-space-age__/graphics/icons/replicator-1.png",
         icon_size = 64,
         effects = {
-            { type = "unlock-recipe", recipe = gprefix .. "dark-matter" },
             { type = "unlock-recipe", recipe = gprefix .. "dark-matter-scoop" },
             { type = "unlock-recipe", recipe = gprefix .. "replication-lab" },
             { type = "unlock-recipe", recipe = gprefix .. "replicator-1" }

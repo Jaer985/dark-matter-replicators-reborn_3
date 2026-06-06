@@ -43,21 +43,7 @@ data:extend({
         }
     },
 
-    -- 4. Pure Dark Matter Condensation (Refining Tenemut to Dark Matter)
-    {
-        type = "recipe",
-        name = gprefix .. "dark-matter",
-        enabled = false,
-        category = "crafting",
-        energy_required = 10,
-        ingredients = {
-            { type = "item", name = gprefix .. "tenemut", amount = 1 },
-            { type = "item", name = "coal", amount = 1 }
-        },
-        results = {
-            { type = "item", name = gprefix .. "dark-matter", amount = 50 }
-        }
-    },
+
 
     -- 5. Replication Lab
     {
