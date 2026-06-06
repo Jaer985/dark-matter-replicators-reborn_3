@@ -38,7 +38,7 @@ end
 local resource = {
 	type = "resource",
 	name = gprefix.."tenemut",
-	icon = "__dark-matter-replicators-space-age__/graphics/icons/tenemut.png",
+	icon = "__dark-matter-replicators-reborn__/graphics/icons/tenemut.png",
 	icon_size = 64,
 	flags = {"placeable-neutral"},
 	order = "b-b-rep",
@@ -55,14 +55,14 @@ local resource = {
 	stage_counts = {2500, 2000, 1500, 1000, 500, 250, 100, 40},
 	stages = {
 		sheet = {
-			filename = "__dark-matter-replicators-space-age__/graphics/entity/tenemut.png",
+			filename = "__dark-matter-replicators-reborn__/graphics/entity/tenemut.png",
 			priority = "extra-high",
 			width = 64,
 			height = 64,
 			frame_count = 8,
 			variation_count = 8,
 			hr_version = {
-				filename = "__dark-matter-replicators-space-age__/graphics/entity/hr-tenemut.png",
+				filename = "__dark-matter-replicators-reborn__/graphics/entity/hr-tenemut.png",
 				priority = "extra-high",
 				width = 128,
 				height = 128,
@@ -80,7 +80,7 @@ data:extend(
 	{
 		type = "tool",
 		name = gprefix.."tenemut",
-		icon = "__dark-matter-replicators-space-age__/graphics/icons/tenemut.png",
+		icon = "__dark-matter-replicators-reborn__/graphics/icons/tenemut.png",
 		icon_size = 64,
 		subgroup = "raw-resource",
 		order = "f[tenemut]",
@@ -105,28 +105,28 @@ data:extend(
 		pictures =
 		{
 			{
-				filename = "__dark-matter-replicators-space-age__/graphics/entity/tenemut-particle-1.png",
+				filename = "__dark-matter-replicators-reborn__/graphics/entity/tenemut-particle-1.png",
 				priority = "extra-high",
 				width = 5,
 				height = 5,
 				frame_count = 1
 			},
 			{
-				filename = "__dark-matter-replicators-space-age__/graphics/entity/tenemut-particle-2.png",
+				filename = "__dark-matter-replicators-reborn__/graphics/entity/tenemut-particle-2.png",
 				priority = "extra-high",
 				width = 6,
 				height = 4,
 				frame_count = 1
 			},
 			{
-				filename = "__dark-matter-replicators-space-age__/graphics/entity/tenemut-particle-3.png",
+				filename = "__dark-matter-replicators-reborn__/graphics/entity/tenemut-particle-3.png",
 				priority = "extra-high",
 				width = 7,
 				height = 8,
 				frame_count = 1
 			},
 			{
-				filename = "__dark-matter-replicators-space-age__/graphics/entity/tenemut-particle-4.png",
+				filename = "__dark-matter-replicators-reborn__/graphics/entity/tenemut-particle-4.png",
 				priority = "extra-high",
 				width = 6,
 				height = 5,
@@ -136,28 +136,28 @@ data:extend(
 		shadows =
 		{
 			{
-				filename = "__dark-matter-replicators-space-age__/graphics/entity/tenemut-particle-shadow-1.png",
+				filename = "__dark-matter-replicators-reborn__/graphics/entity/tenemut-particle-shadow-1.png",
 				priority = "extra-high",
 				width = 5,
 				height = 5,
 				frame_count = 1
 			},
 			{
-				filename = "__dark-matter-replicators-space-age__/graphics/entity/tenemut-particle-shadow-2.png",
+				filename = "__dark-matter-replicators-reborn__/graphics/entity/tenemut-particle-shadow-2.png",
 				priority = "extra-high",
 				width = 6,
 				height = 4,
 				frame_count = 1
 			},
 			{
-				filename = "__dark-matter-replicators-space-age__/graphics/entity/tenemut-particle-shadow-3.png",
+				filename = "__dark-matter-replicators-reborn__/graphics/entity/tenemut-particle-shadow-3.png",
 				priority = "extra-high",
 				width = 7,
 				height = 8,
 				frame_count = 1
 			},
 			{
-				filename = "__dark-matter-replicators-space-age__/graphics/entity/tenemut-particle-shadow-4.png",
+				filename = "__dark-matter-replicators-reborn__/graphics/entity/tenemut-particle-shadow-4.png",
 				priority = "extra-high",
 				width = 6,
 				height = 5,

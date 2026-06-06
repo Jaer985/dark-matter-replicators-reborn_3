@@ -5,7 +5,7 @@ data:extend({
     {
         type = "item-group",
         name = "dmrsa-replication",
-        icon = "__dark-matter-replicators-space-age__/graphics/icons/category-replicators.png",
+        icon = "__dark-matter-replicators-reborn__/graphics/icons/category-replicators.png",
         icon_size = 64,
         order = "g-dmrsa"
     }
@@ -51,7 +51,7 @@ data:extend({
         hidden = true,
         icons = {
             {
-                icon = "__dark-matter-replicators-space-age__/graphics/icons/tenemut.png",
+                icon = "__dark-matter-replicators-reborn__/graphics/icons/tenemut.png",
                 tint = {r = 0.25, g = 0.05, b = 0.35, a = 1.0} -- SLEEK PURPLE/DARK MATTE TINT
             }
         },
@@ -65,7 +65,7 @@ data:extend({
     {
         type = "tool",
         name = gprefix .. "dark-matter-scoop",
-        icon = "__dark-matter-replicators-space-age__/graphics/icons/dark-matter-scoop.png",
+        icon = "__dark-matter-replicators-reborn__/graphics/icons/dark-matter-scoop.png",
         icon_size = 64,
         subgroup = gprefix .. "replication-resources",
         order = "a[matter-conduit]-a",
@@ -77,7 +77,7 @@ data:extend({
     {
         type = "tool",
         name = gprefix .. "dark-matter-transducer",
-        icon = "__dark-matter-replicators-space-age__/graphics/icons/dark-matter-transducer.png",
+        icon = "__dark-matter-replicators-reborn__/graphics/icons/dark-matter-transducer.png",
         icon_size = 64,
         subgroup = gprefix .. "replication-resources",
         order = "a[matter-conduit]-b",
@@ -89,7 +89,7 @@ data:extend({
     {
         type = "tool",
         name = gprefix .. "matter-conduit",
-        icon = "__dark-matter-replicators-space-age__/graphics/icons/matter-conduit.png",
+        icon = "__dark-matter-replicators-reborn__/graphics/icons/matter-conduit.png",
         icon_size = 64,
         subgroup = gprefix .. "replication-resources",
         order = "a[matter-conduit]-c",

@@ -25,7 +25,7 @@ local function get_tech_icons(name, target, tier)
         border = "tech-alloy"
     end
 
-    local border_path = "__dark-matter-replicators-space-age__/graphics/icons/borders/" .. border .. ".png"
+    local border_path = "__dark-matter-replicators-reborn__/graphics/icons/borders/" .. border .. ".png"
 
     local icons = {}
     -- Base layer: Border (128x128)
@@ -51,7 +51,7 @@ local function get_tech_icons(name, target, tier)
             table.insert(icons, spec)
         end
     else
-        local icon_path = target.icon or "__dark-matter-replicators-space-age__/graphics/icons/tenemut.png"
+        local icon_path = target.icon or "__dark-matter-replicators-reborn__/graphics/icons/tenemut.png"
         local isize = target.icon_size or 64
         table.insert(icons, {
             icon = icon_path,

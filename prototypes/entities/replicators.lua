@@ -53,7 +53,7 @@ for tier = 1, 5 do
     local replicator = {
         type = "assembling-machine",
         name = gprefix .. "replicator-" .. tier,
-        icon = "__dark-matter-replicators-space-age__/graphics/icons/replicator-" .. tier .. ".png",
+        icon = "__dark-matter-replicators-reborn__/graphics/icons/replicator-" .. tier .. ".png",
         icon_size = 64,
         flags = { "placeable-neutral", "placeable-player", "player-creation" },
         minable = { mining_time = 0.2, result = gprefix .. "replicator-" .. tier },
@@ -106,7 +106,7 @@ for tier = 1, 5 do
         -- Graphics and sounds
         graphics_set = {
             animation = {
-                filename = "__dark-matter-replicators-space-age__/graphics/entity/replicator-" .. tier .. ".png",
+                filename = "__dark-matter-replicators-reborn__/graphics/entity/replicator-" .. tier .. ".png",
                 priority = "high",
                 width = 113,
                 height = 91,
@@ -142,7 +142,7 @@ for tier = 1, 5 do
         {
             type = "item",
             name = gprefix .. "replicator-" .. tier,
-            icon = "__dark-matter-replicators-space-age__/graphics/icons/replicator-" .. tier .. ".png",
+            icon = "__dark-matter-replicators-reborn__/graphics/icons/replicator-" .. tier .. ".png",
             icon_size = 64,
             subgroup = "production-machine",
             order = "b" .. tier,
@@ -164,7 +164,7 @@ data:extend({
     {
         type = "item",
         name = gprefix .. "replication-lab",
-        icon = "__dark-matter-replicators-space-age__/graphics/icons/replication-lab.png",
+        icon = "__dark-matter-replicators-reborn__/graphics/icons/replication-lab.png",
         icon_size = 64,
         subgroup = gprefix .. "replicators",
         order = "a",
@@ -174,7 +174,7 @@ data:extend({
     {
         type = "lab",
         name = gprefix .. "replication-lab",
-        icon = "__dark-matter-replicators-space-age__/graphics/icons/replication-lab.png",
+        icon = "__dark-matter-replicators-reborn__/graphics/icons/replication-lab.png",
         icon_size = 64,
         flags = { "placeable-player", "player-creation" },
         minable = { mining_time = 1, result = gprefix .. "replication-lab" },
@@ -185,7 +185,7 @@ data:extend({
         selection_box = { { -1.5, -1.5 }, { 1.5, 1.5 } },
         light = { intensity = 0.75, size = 8 },
         on_animation = {
-            filename = "__dark-matter-replicators-space-age__/graphics/entity/replication-lab.png",
+            filename = "__dark-matter-replicators-reborn__/graphics/entity/replication-lab.png",
             width = 113,
             height = 91,
             frame_count = 33,
@@ -194,7 +194,7 @@ data:extend({
             shift = { 0.2, 0.15 }
         },
         off_animation = {
-            filename = "__dark-matter-replicators-space-age__/graphics/entity/replication-lab.png",
+            filename = "__dark-matter-replicators-reborn__/graphics/entity/replication-lab.png",
             width = 113,
             height = 91,
             frame_count = 1,

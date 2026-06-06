@@ -16,11 +16,11 @@ local function make_planetary_replicator(name_suffix, speed, power_mw, tint_colo
     local entity = {
         type = "assembling-machine",
         name = name,
-        icon = "__dark-matter-replicators-space-age__/graphics/icons/replicator-3.png",
+        icon = "__dark-matter-replicators-reborn__/graphics/icons/replicator-3.png",
         icon_size = 64,
         icons = {
             {
-                icon = "__dark-matter-replicators-space-age__/graphics/icons/replicator-3.png",
+                icon = "__dark-matter-replicators-reborn__/graphics/icons/replicator-3.png",
                 tint = tint_color
             }
         },
@@ -74,7 +74,7 @@ local function make_planetary_replicator(name_suffix, speed, power_mw, tint_colo
         -- Graphics with custom planetary tint overlays!
         graphics_set = {
             animation = {
-                filename = "__dark-matter-replicators-space-age__/graphics/entity/replicator-3.png",
+                filename = "__dark-matter-replicators-reborn__/graphics/entity/replicator-3.png",
                 priority = "high",
                 width = 113,
                 height = 91,
@@ -115,11 +115,11 @@ local function make_planetary_replicator(name_suffix, speed, power_mw, tint_colo
         {
             type = "item",
             name = name,
-            icon = "__dark-matter-replicators-space-age__/graphics/icons/replicator-3.png",
+            icon = "__dark-matter-replicators-reborn__/graphics/icons/replicator-3.png",
             icon_size = 64,
             icons = {
                 {
-                    icon = "__dark-matter-replicators-space-age__/graphics/icons/replicator-3.png",
+                    icon = "__dark-matter-replicators-reborn__/graphics/icons/replicator-3.png",
                     tint = tint_color
                 }
             },

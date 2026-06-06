@@ -47,7 +47,7 @@ data:extend({
     {
         type = "technology",
         name = gprefix .. "replication-1",
-        icon = "__dark-matter-replicators-space-age__/graphics/icons/replicator-1.png",
+        icon = "__dark-matter-replicators-reborn__/graphics/icons/replicator-1.png",
         icon_size = 64,
         effects = {
             { type = "unlock-recipe", recipe = gprefix .. "dark-matter-scoop" },
@@ -63,7 +63,7 @@ data:extend({
     {
         type = "technology",
         name = gprefix .. "replication-2",
-        icon = "__dark-matter-replicators-space-age__/graphics/icons/replicator-2.png",
+        icon = "__dark-matter-replicators-reborn__/graphics/icons/replicator-2.png",
         icon_size = 64,
         effects = {
             { type = "unlock-recipe", recipe = gprefix .. "dark-matter-transducer" },
@@ -78,7 +78,7 @@ data:extend({
     {
         type = "technology",
         name = gprefix .. "replication-3",
-        icon = "__dark-matter-replicators-space-age__/graphics/icons/replicator-3.png",
+        icon = "__dark-matter-replicators-reborn__/graphics/icons/replicator-3.png",
         icon_size = 64,
         effects = {
             { type = "unlock-recipe", recipe = gprefix .. "replicator-3" }
@@ -92,7 +92,7 @@ data:extend({
     {
         type = "technology",
         name = gprefix .. "replication-4",
-        icon = "__dark-matter-replicators-space-age__/graphics/icons/replicator-4.png",
+        icon = "__dark-matter-replicators-reborn__/graphics/icons/replicator-4.png",
         icon_size = 64,
         effects = {
             { type = "unlock-recipe", recipe = gprefix .. "matter-conduit" },
@@ -107,7 +107,7 @@ data:extend({
     {
         type = "technology",
         name = gprefix .. "replication-5",
-        icon = "__dark-matter-replicators-space-age__/graphics/icons/replicator-5.png",
+        icon = "__dark-matter-replicators-reborn__/graphics/icons/replicator-5.png",
         icon_size = 64,
         effects = {
             { type = "unlock-recipe", recipe = gprefix .. "replicator-5" }

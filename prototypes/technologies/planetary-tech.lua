@@ -24,7 +24,7 @@ if mods["space-age"] then
             localised_description = {"technology-description.dmrsa-replication-vulcanus"},
             icons = {
                 {
-                    icon = "__dark-matter-replicators-space-age__/graphics/icons/replicator-3.png",
+                    icon = "__dark-matter-replicators-reborn__/graphics/icons/replicator-3.png",
                     tint = { r = 1.0, g = 0.35, b = 0.15, a = 1.0 } -- Geothermal orange-red
                 }
             },
@@ -45,7 +45,7 @@ if mods["space-age"] then
             localised_description = {"technology-description.dmrsa-replication-fulgora"},
             icons = {
                 {
-                    icon = "__dark-matter-replicators-space-age__/graphics/icons/replicator-3.png",
+                    icon = "__dark-matter-replicators-reborn__/graphics/icons/replicator-3.png",
                     tint = { r = 0.45, g = 0.15, b = 0.9, a = 1.0 } -- Electromagnetic purple-blue
                 }
             },
@@ -66,7 +66,7 @@ if mods["space-age"] then
             localised_description = {"technology-description.dmrsa-replication-gleba"},
             icons = {
                 {
-                    icon = "__dark-matter-replicators-space-age__/graphics/icons/replicator-3.png",
+                    icon = "__dark-matter-replicators-reborn__/graphics/icons/replicator-3.png",
                     tint = { r = 0.25, g = 0.85, b = 0.35, a = 1.0 } -- Biological green
                 }
             },
@@ -87,7 +87,7 @@ if mods["space-age"] then
             localised_description = {"technology-description.dmrsa-replication-aquilo"},
             icons = {
                 {
-                    icon = "__dark-matter-replicators-space-age__/graphics/icons/replicator-3.png",
+                    icon = "__dark-matter-replicators-reborn__/graphics/icons/replicator-3.png",
                     tint = { r = 0.35, g = 0.75, b = 1.0, a = 1.0 } -- Subzero icy cyan
                 }
             },
