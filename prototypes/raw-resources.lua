@@ -85,8 +85,7 @@ data:extend(
 		subgroup = "raw-resource",
 		order = "f[tenemut]",
 		stack_size = 200,
-		durability = 1,
-		durability_description_key = "description.science-pack-remaining-amount"
+		durability = 1
 	},
 	{
 		type = "autoplace-control",

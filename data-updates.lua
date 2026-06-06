@@ -1,87 +1,109 @@
 require("defines")
+local helpers = require("lib.helpers")
+local DynamicGenerator = require("prototypes.recipes.dynamic-generator")
 
---[[
---The table to string function from http://lua-users.org/wiki/TableUtils
---Very useful for debugging
+-- 1. Execute dynamic recipe generation and receive baseline and planetary unlocks
+local baseline_unlocks, planetary_unlocks = DynamicGenerator.generate()
 
-function table.val_to_str ( v )
-  if "string" == type( v ) then
-    v = string.gsub( v, "\n", "\\n" )
-    if string.match( string.gsub(v,"[^'\"]",""), '^"+$' ) then
-      return "'" .. v .. "'"
+-- 2. Dynamically attach baseline unlocks to their corresponding technology nodes
+for tier = 1, 5 do
+    local tech_name = gprefix .. "replication-" .. tier
+    local tech = data.raw.technology[tech_name]
+    local unlocks = baseline_unlocks[tier]
+
+    if tech and unlocks and #unlocks > 0 then
+        tech.effects = tech.effects or {}
+        for _, recipe_name in ipairs(unlocks) do
+            table.insert(tech.effects, { type = "unlock-recipe", recipe = recipe_name })
+        end
     end
-    return '"' .. string.gsub(v,'"', '\\"' ) .. '"'
-  else
-    return "table" == type( v ) and table.tostring( v ) or
-      tostring( v )
-  end
 end
 
-function table.key_to_str ( k )
-  if "string" == type( k ) and string.match( k, "^[_%a][_%a%d]*$" ) then
-    return k
-  else
-    return "[" .. table.val_to_str( k ) .. "]"
-  end
-end
-
-function table.tostring( tbl )
-  local result, done = {}, {}
-  for k, v in ipairs( tbl ) do
-    table.insert( result, table.val_to_str( v ) )
-    done[ k ] = true
-  end
-  for k, v in pairs( tbl ) do
-    if not done[ k ] then
-      table.insert( result,
-        table.key_to_str( k ) .. "=" .. table.val_to_str( v ) )
+-- 3. Dynamically attach planetary unlocks to their corresponding planetary technology nodes
+if mods["space-age"] and planetary_unlocks then
+    for planet, unlocks in pairs(planetary_unlocks) do
+        local tech_name = gprefix .. "replication-" .. planet .. "-tech"
+        local tech = data.raw.technology[tech_name]
+        if tech and unlocks and #unlocks > 0 then
+            tech.effects = tech.effects or {}
+            for _, recipe_name in ipairs(unlocks) do
+                table.insert(tech.effects, { type = "unlock-recipe", recipe = recipe_name })
+            end
+        end
     end
-  end
-  return "{" .. table.concat( result, "," ) .. "}"
-end
---]]
-
---Go through the tables of replications and calculate the numerical costs of all item replications
-require("prototypes.repltable.process-costs")
---Go through the tables of replication technologies and sort out their prerequisite technologies
-require("prototypes.repltable.process-prereqs")
---Parse the replication table and make the replications and their unlock technologies via the table's data
-require("prototypes.repltable.process-actual-creation")
-
-local default_planet = string.lower(settings.startup["tenemut-spawning-planet"].value);
-if data.raw.planet[default_planet] then
-	data.raw.planet[default_planet].map_gen_settings.autoplace_controls[gprefix.."tenemut"] = {}
-	data.raw.planet[default_planet].map_gen_settings.autoplace_settings.entity.settings[gprefix.."tenemut"] = {}
-else -- How?
-	log("Unknown planet selected as starting planet: "..default_planet)
 end
 
+-- 4. Configure planet autoplace spawning for Tenemut
+local spawning_planet_setting = settings.startup["tenemut-spawning-planet"]
+if spawning_planet_setting and spawning_planet_setting.value then
+    local default_planet = string.lower(spawning_planet_setting.value)
+    if data.raw.planet and data.raw.planet[default_planet] then
+        local planet_def = data.raw.planet[default_planet]
+        if planet_def.map_gen_settings then
+            planet_def.map_gen_settings.autoplace_controls = planet_def.map_gen_settings.autoplace_controls or {}
+            planet_def.map_gen_settings.autoplace_settings = planet_def.map_gen_settings.autoplace_settings or {}
+            planet_def.map_gen_settings.autoplace_settings.entity = planet_def.map_gen_settings.autoplace_settings.entity or {}
+            planet_def.map_gen_settings.autoplace_settings.entity.settings = planet_def.map_gen_settings.autoplace_settings.entity.settings or {}
+
+            planet_def.map_gen_settings.autoplace_controls[gprefix .. "tenemut"] = {}
+            planet_def.map_gen_settings.autoplace_settings.entity.settings[gprefix .. "tenemut"] = {}
+        end
+    else
+        helpers.log("Unknown planet selected as starting planet: " .. default_planet)
+    end
+end
+
+-- 5. Map autoplace for other Space Age planets if configured
 if mods["space-age"] then
-	if settings.startup["tenemut-other-planets"].value ~= "None" then
-		for planet, ptbl in pairs(data.raw.planet) do
-			if planet ~= "nauvis" or settings.startup["tenemut-other-planets"].value == "All" then
-				if ptbl.map_gen_settings and ptbl.map_gen_settings.autoplace_controls and ptbl.map_gen_settings.autoplace_settings then
-					ptbl.map_gen_settings.autoplace_controls[gprefix.."tenemut"] = {}
-					ptbl.map_gen_settings.autoplace_settings.entity.settings[gprefix.."tenemut"] = {}
-				end
-			end
-		end
-	end
+    local other_planets_setting = settings.startup["tenemut-other-planets"]
+    if other_planets_setting and other_planets_setting.value ~= "None" then
+        local value = other_planets_setting.value
+        if data.raw.planet then
+            for planet, ptbl in pairs(data.raw.planet) do
+                if planet ~= "nauvis" or value == "All" then
+                    if ptbl.map_gen_settings then
+                        ptbl.map_gen_settings.autoplace_controls = ptbl.map_gen_settings.autoplace_controls or {}
+                        ptbl.map_gen_settings.autoplace_settings = ptbl.map_gen_settings.autoplace_settings or {}
+                        ptbl.map_gen_settings.autoplace_settings.entity = ptbl.map_gen_settings.autoplace_settings.entity or {}
+                        ptbl.map_gen_settings.autoplace_settings.entity.settings = ptbl.map_gen_settings.autoplace_settings.entity.settings or {}
+
+                        ptbl.map_gen_settings.autoplace_controls[gprefix .. "tenemut"] = {}
+                        ptbl.map_gen_settings.autoplace_settings.entity.settings[gprefix .. "tenemut"] = {}
+                    end
+                end
+            end
+        end
+    end
 end
 
-if mods["space-age"] and not settings.startup["replication-in-space"].value then
-	data.raw.lab[gprefix.."replication-lab"].surface_conditions = {
-    {
-      property = "gravity",
-      min = 0.1
-    }
-  }
-  for i = 1, 5 do
-    data.raw["assembling-machine"][gprefix.."replicator-"..i].surface_conditions = {
-      {
-        property = "gravity",
-        min = 0.1
-      }
-    }
-  end
+-- 6. Surface conditions and gravity restrictions (No replication in zero-gravity space unless configured)
+if mods["space-age"] then
+    local space_repl_setting = settings.startup["replication-in-space"]
+    if space_repl_setting and not space_repl_setting.value then
+        -- Enforce gravity for the lab
+        local lab = data.raw.lab[gprefix .. "replication-lab"]
+        if lab then
+            lab.surface_conditions = lab.surface_conditions or {}
+            table.insert(lab.surface_conditions, { property = "gravity", min = 0.1 })
+        end
+
+        -- Enforce gravity for all Replicator entities
+        for i = 1, 5 do
+            local assembler = data.raw["assembling-machine"][gprefix .. "replicator-" .. i]
+            if assembler then
+                assembler.surface_conditions = assembler.surface_conditions or {}
+                table.insert(assembler.surface_conditions, { property = "gravity", min = 0.1 })
+            end
+        end
+
+        -- Enforce gravity for specialized planetary Replicator entities
+        local planetary_suffixes = { "vulcanus", "fulgora", "gleba", "aquilo" }
+        for _, suffix in ipairs(planetary_suffixes) do
+            local assembler = data.raw["assembling-machine"][gprefix .. "replicator-" .. suffix]
+            if assembler then
+                assembler.surface_conditions = assembler.surface_conditions or {}
+                table.insert(assembler.surface_conditions, { property = "gravity", min = 0.1 })
+            end
+        end
+    end
 end
