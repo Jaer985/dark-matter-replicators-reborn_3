@@ -6,7 +6,7 @@ data:extend({
         type = "item-group",
         name = "dmrsa-replication",
         icon = "__dark-matter-replicators-reborn__/graphics/icons/category-replicators.png",
-        icon_size = 64,
+        icon_size = 128,
         order = "g-dmrsa"
     }
 })

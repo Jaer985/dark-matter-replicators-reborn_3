@@ -1,3 +1,4 @@
+Post 3.0 version: Jaer985
 Post 2.0/Space Age version: nihilistzsche
 Post 18 version: Honktown
 From pre-18 version: "TempiDrachen (pre-0.3 versions by jamupsi, Fix for 0.17.69+ by chipgeekjr)"

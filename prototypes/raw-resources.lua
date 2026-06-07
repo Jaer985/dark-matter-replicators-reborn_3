@@ -1,4 +1,5 @@
 local resource_autoplace = require("resource-autoplace")
+resource_autoplace.initialize_patch_set(gprefix.."tenemut", true)
 
 local autoplace_table = {
 	name = gprefix.."tenemut",
@@ -166,4 +167,3 @@ data:extend(
 		}
 	},
 })
-resource_autoplace.initialize_patch_set(gprefix.."tenemut", true)
