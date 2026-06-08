@@ -1,4 +1,14 @@
 ---------------------------------------------------------------------------------------------------
+Version: 3.1.0
+Date: 2026-06-08
+  Features:
+    - Split replication-3 technology into 3 parallel planetary technologies (Vulcanus, Fulgora, Gleba) to allow non-linear planetary progression.
+    - Added replication support for metallic, carbonaceous, and oxide asteroid chunks (Tier 4, cost 2.0).
+  Changes:
+    - Rebalanced Promethium Ore to Tier 5 with a base cost of 20.0.
+    - Restrained Promethium Science Pack replication recipe to space platforms only (Tier 5, cost 50.0).
+    - Removed obsolete hr_version from Tenemut graphics to fix startup warnings.
+---------------------------------------------------------------------------------------------------
 Version: 3.0.2
 Date: 2026-06-07
   Bugfixes:

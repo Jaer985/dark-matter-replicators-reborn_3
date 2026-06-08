@@ -19,7 +19,12 @@ local BASE_RESOURCE_COSTS = {
     ["tungsten-ore"] = { dark_matter = 4.0, time = 4.0, tier = 3 },
     ["jellynut"] = { dark_matter = 2.0, time = 2.0, tier = 3 },
     ["yumako"] = { dark_matter = 2.0, time = 2.0, tier = 3 },
-    ["spoiled-organic-substrate"] = { dark_matter = 0.5, time = 0.5, tier = 3 }
+    ["spoiled-organic-substrate"] = { dark_matter = 0.5, time = 0.5, tier = 3 },
+    ["metallic-asteroid-chunk"] = { dark_matter = 2.0, time = 2.0, tier = 4 },
+    ["carbonaceous-asteroid-chunk"] = { dark_matter = 2.0, time = 2.0, tier = 4 },
+    ["oxide-asteroid-chunk"] = { dark_matter = 2.0, time = 2.0, tier = 4 },
+    ["promethium-ore"] = { dark_matter = 20.0, time = 20.0, tier = 5 },
+    ["promethium-science-pack"] = { dark_matter = 50.0, time = 50.0, tier = 5 }
 }
 
 local recipe_map = {}

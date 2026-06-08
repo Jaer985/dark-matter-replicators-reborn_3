@@ -30,9 +30,10 @@ if mods["space-age"] then
             },
             icon_size = 64,
             effects = {
-                { type = "unlock-recipe", recipe = gprefix .. "replicator-vulcanus" }
+                { type = "unlock-recipe", recipe = gprefix .. "replicator-vulcanus" },
+                { type = "unlock-recipe", recipe = gprefix .. "replicator-3" }
             },
-            prerequisites = { gprefix .. "replication-3", "metallurgic-science-pack" },
+            prerequisites = { gprefix .. "replication-2", "metallurgic-science-pack" },
             unit = make_research_unit(200, { "automation-science-pack", "logistic-science-pack", "chemical-science-pack", "metallurgic-science-pack" }, 30),
             order = "a-r-vulcanus"
         },
@@ -51,9 +52,10 @@ if mods["space-age"] then
             },
             icon_size = 64,
             effects = {
-                { type = "unlock-recipe", recipe = gprefix .. "replicator-fulgora" }
+                { type = "unlock-recipe", recipe = gprefix .. "replicator-fulgora" },
+                { type = "unlock-recipe", recipe = gprefix .. "replicator-3" }
             },
-            prerequisites = { gprefix .. "replication-3", "electromagnetic-science-pack" },
+            prerequisites = { gprefix .. "replication-2", "electromagnetic-science-pack" },
             unit = make_research_unit(200, { "automation-science-pack", "logistic-science-pack", "chemical-science-pack", "electromagnetic-science-pack" }, 30),
             order = "a-r-fulgora"
         },
@@ -72,9 +74,10 @@ if mods["space-age"] then
             },
             icon_size = 64,
             effects = {
-                { type = "unlock-recipe", recipe = gprefix .. "replicator-gleba" }
+                { type = "unlock-recipe", recipe = gprefix .. "replicator-gleba" },
+                { type = "unlock-recipe", recipe = gprefix .. "replicator-3" }
             },
-            prerequisites = { gprefix .. "replication-3", "agricultural-science-pack" },
+            prerequisites = { gprefix .. "replication-2", "agricultural-science-pack" },
             unit = make_research_unit(200, { "automation-science-pack", "logistic-science-pack", "chemical-science-pack", "agricultural-science-pack" }, 30),
             order = "a-r-gleba"
         },

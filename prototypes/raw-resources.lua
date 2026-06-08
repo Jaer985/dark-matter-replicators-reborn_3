@@ -61,16 +61,7 @@ local resource = {
 			width = 64,
 			height = 64,
 			frame_count = 8,
-			variation_count = 8,
-			hr_version = {
-				filename = "__dark-matter-replicators-reborn__/graphics/entity/hr-tenemut.png",
-				priority = "extra-high",
-				width = 128,
-				height = 128,
-				frame_count = 8,
-				variation_count = 8,
-				scale = 0.5
-			}
+			variation_count = 8
 		}
 	},
 	map_color = {r=0.550, g=0.392, b=0.550}

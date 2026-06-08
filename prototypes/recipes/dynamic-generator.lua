@@ -185,6 +185,12 @@ function DynamicGenerator.generate()
                 order = "z[" .. name .. "]"
             }
 
+            if name == "promethium-science-pack" then
+                repl_recipe.surface_conditions = {
+                    { property = "gravity", max = 0 }
+                }
+            end
+
             -- Safely extend recipe
             data:extend({ repl_recipe })
             recipe_count = recipe_count + 1
@@ -270,7 +276,11 @@ function DynamicGenerator.generate()
                 if planet_suffix then
                     add_prereq(prerequisites, gprefix .. "replication-" .. planet_suffix .. "-tech")
                 else
-                    add_prereq(prerequisites, gprefix .. "replication-" .. tier)
+                    if mods["space-age"] and tier == 3 then
+                        add_prereq(prerequisites, gprefix .. "replication-2")
+                    else
+                        add_prereq(prerequisites, gprefix .. "replication-" .. tier)
+                    end
                 end
 
                 -- B. Original item unlocks

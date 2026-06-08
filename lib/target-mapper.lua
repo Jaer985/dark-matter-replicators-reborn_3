@@ -35,9 +35,11 @@ function TargetMapper.get_potential_replication_targets()
                     is_valid = false
                 end
 
-                -- Filter out hidden items
+                -- Filter out hidden items (whitelist specific asteroid chunks)
                 if is_valid and (item.hidden or (item.flags and has_flag(item.flags, "hidden"))) then
-                    is_valid = false
+                    if name ~= "metallic-asteroid-chunk" and name ~= "carbonaceous-asteroid-chunk" and name ~= "oxide-asteroid-chunk" then
+                        is_valid = false
+                    end
                 end
 
                 -- Ensure item actually exists in registry and has valid properties

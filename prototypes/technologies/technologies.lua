@@ -42,7 +42,7 @@ else
     table.insert(t5_packs, "space-science-pack")
 end
 
-data:extend({
+local tech_list = {
     -- Technology Tier 1
     {
         type = "technology",
@@ -72,10 +72,11 @@ data:extend({
         prerequisites = { gprefix .. "replication-1", "advanced-circuits" }, -- FIXED FOR FACTORIO 2.0 (formerly advanced-electronics)
         unit = make_research_unit(100, t2_packs, 30),
         order = "a-r-2"
-    },
+    }
+}
 
-    -- Technology Tier 3
-    {
+if not mods["space-age"] then
+    table.insert(tech_list, {
         type = "technology",
         name = gprefix .. "replication-3",
         icon = "__dark-matter-replicators-reborn__/graphics/icons/replicator-3.png",
@@ -83,37 +84,49 @@ data:extend({
         effects = {
             { type = "unlock-recipe", recipe = gprefix .. "replicator-3" }
         },
-        prerequisites = mods["space-age"] and { gprefix .. "replication-2", "metallurgic-science-pack" } or { gprefix .. "replication-2" },
+        prerequisites = { gprefix .. "replication-2" },
         unit = make_research_unit(150, t3_packs, 30),
         order = "a-r-3"
-    },
+    })
+end
 
-    -- Technology Tier 4
-    {
-        type = "technology",
-        name = gprefix .. "replication-4",
-        icon = "__dark-matter-replicators-reborn__/graphics/icons/replicator-4.png",
-        icon_size = 64,
-        effects = {
-            { type = "unlock-recipe", recipe = gprefix .. "matter-conduit" },
-            { type = "unlock-recipe", recipe = gprefix .. "replicator-4" }
-        },
-        prerequisites = { gprefix .. "replication-3", "processing-unit" }, -- FIXED FOR FACTORIO 2.0 (formerly advanced-electronics-2)
-        unit = make_research_unit(250, t4_packs, 30),
-        order = "a-r-4"
-    },
-
-    -- Technology Tier 5
-    {
-        type = "technology",
-        name = gprefix .. "replication-5",
-        icon = "__dark-matter-replicators-reborn__/graphics/icons/replicator-5.png",
-        icon_size = 64,
-        effects = {
-            { type = "unlock-recipe", recipe = gprefix .. "replicator-5" }
-        },
-        prerequisites = mods["space-age"] and { gprefix .. "replication-4", "cryogenic-science-pack" } or { gprefix .. "replication-4" },
-        unit = make_research_unit(500, t5_packs, 45),
-        order = "a-r-5"
+local rep_4_prereqs
+if mods["space-age"] then
+    rep_4_prereqs = {
+        gprefix .. "replication-vulcanus-tech",
+        gprefix .. "replication-fulgora-tech",
+        gprefix .. "replication-gleba-tech",
+        "processing-unit"
     }
+else
+    rep_4_prereqs = { gprefix .. "replication-3", "processing-unit" }
+end
+
+table.insert(tech_list, {
+    type = "technology",
+    name = gprefix .. "replication-4",
+    icon = "__dark-matter-replicators-reborn__/graphics/icons/replicator-4.png",
+    icon_size = 64,
+    effects = {
+        { type = "unlock-recipe", recipe = gprefix .. "matter-conduit" },
+        { type = "unlock-recipe", recipe = gprefix .. "replicator-4" }
+    },
+    prerequisites = rep_4_prereqs,
+    unit = make_research_unit(250, t4_packs, 30),
+    order = "a-r-4"
 })
+
+table.insert(tech_list, {
+    type = "technology",
+    name = gprefix .. "replication-5",
+    icon = "__dark-matter-replicators-reborn__/graphics/icons/replicator-5.png",
+    icon_size = 64,
+    effects = {
+        { type = "unlock-recipe", recipe = gprefix .. "replicator-5" }
+    },
+    prerequisites = mods["space-age"] and { gprefix .. "replication-4", "cryogenic-science-pack" } or { gprefix .. "replication-4" },
+    unit = make_research_unit(500, t5_packs, 45),
+    order = "a-r-5"
+})
+
+data:extend(tech_list)

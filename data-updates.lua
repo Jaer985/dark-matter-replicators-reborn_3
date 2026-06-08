@@ -16,6 +16,22 @@ for tier = 1, 5 do
         for _, recipe_name in ipairs(unlocks) do
             table.insert(tech.effects, { type = "unlock-recipe", recipe = recipe_name })
         end
+    elseif tier == 3 and mods["space-age"] and unlocks and #unlocks > 0 then
+        -- Attach baseline Tier 3 unlocks to the three planetary technologies
+        local planetary_techs = {
+            gprefix .. "replication-vulcanus-tech",
+            gprefix .. "replication-fulgora-tech",
+            gprefix .. "replication-gleba-tech"
+        }
+        for _, p_tech_name in ipairs(planetary_techs) do
+            local p_tech = data.raw.technology[p_tech_name]
+            if p_tech then
+                p_tech.effects = p_tech.effects or {}
+                for _, recipe_name in ipairs(unlocks) do
+                    table.insert(p_tech.effects, { type = "unlock-recipe", recipe = recipe_name })
+                end
+            end
+        end
     end
 end
 
