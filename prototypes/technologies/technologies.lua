@@ -88,6 +88,18 @@ if not mods["space-age"] then
         unit = make_research_unit(150, t3_packs, 30),
         order = "a-r-3"
     })
+else
+    table.insert(tech_list, {
+        type = "technology",
+        name = gprefix .. "replication-3",
+        icon = "__dark-matter-replicators-reborn__/graphics/icons/replicator-3.png",
+        icon_size = 64,
+        hidden = true,
+        effects = {},
+        prerequisites = { gprefix .. "replication-2" },
+        unit = make_research_unit(150, t3_packs, 30),
+        order = "a-r-3"
+    })
 end
 
 local rep_4_prereqs

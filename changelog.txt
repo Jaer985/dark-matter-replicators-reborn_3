@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 3.1.1
+Date: 2026-06-08
+  Bugfixes:
+    - Fixed "Non-contiguous levels: 2, followed by 4" startup error when Space Age is enabled by registering replication-3 as a hidden technology prototype.
+
+---------------------------------------------------------------------------------------------------
 Version: 3.1.0
 Date: 2026-06-08
   Features:

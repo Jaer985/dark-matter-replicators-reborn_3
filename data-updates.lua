@@ -11,7 +11,7 @@ for tier = 1, 5 do
     local tech = data.raw.technology[tech_name]
     local unlocks = baseline_unlocks[tier]
 
-    if tech and unlocks and #unlocks > 0 then
+    if tech and (not (tier == 3 and mods["space-age"])) and unlocks and #unlocks > 0 then
         tech.effects = tech.effects or {}
         for _, recipe_name in ipairs(unlocks) do
             table.insert(tech.effects, { type = "unlock-recipe", recipe = recipe_name })
