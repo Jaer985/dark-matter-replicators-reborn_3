@@ -331,7 +331,7 @@ function DynamicGenerator.generate()
                     local recipe_obj = CostSolver.recipe_map[name]
                     if recipe_obj then
                         local original_tech = CostSolver.recipe_tech_map[recipe_obj.name]
-                        if original_tech then
+                        if original_tech and not original_tech.hidden then
                             add_prereq(prerequisites, original_tech.name)
                         end
                     end
@@ -455,7 +455,7 @@ function DynamicGenerator.generate()
                     local recipe_obj = CostSolver.recipe_map[name]
                     if recipe_obj then
                         local original_tech = CostSolver.recipe_tech_map[recipe_obj.name]
-                        if original_tech then
+                        if original_tech and not original_tech.hidden then
                             group.original_techs[original_tech.name] = true
                         end
                     end

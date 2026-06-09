@@ -8,6 +8,7 @@ Date: 2026-06-08
     - Increased research cycle time for grouped technologies to 25 seconds to enforce time-gating.
   Bugfixes:
     - Dynamically registered all required planetary and custom science packs as acceptable inputs for the Replication Lab in data-final-fixes to prevent "no lab will accept all science packs" startup crashes.
+    - Excluded hidden technologies (such as 'basic-logistics') from being registered as prerequisites for replication technologies, preventing unresearchable warning prompts from mods like PlanetsLib.
 
 ---------------------------------------------------------------------------------------------------
 Version: 3.1.2
