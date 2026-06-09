@@ -1,4 +1,15 @@
 ---------------------------------------------------------------------------------------------------
+Version: 3.2.0
+Date: 2026-06-08
+  Features:
+    - Added "Grouped Categories" replication technology distribution mode as the new default setting.
+    - Consolidated replication recipe unlocks into thematic category technologies per tier and planet (e.g. Ores, Alloys, Fluids, Modules, Components).
+    - Implemented dynamic research cost scaling for grouped technologies based on the number of items in that category, with a customizable cost multiplier setting (defaulting to 5.0).
+    - Increased research cycle time for grouped technologies to 25 seconds to enforce time-gating.
+  Bugfixes:
+    - Dynamically registered all required planetary and custom science packs as acceptable inputs for the Replication Lab in data-final-fixes to prevent "no lab will accept all science packs" startup crashes.
+
+---------------------------------------------------------------------------------------------------
 Version: 3.1.2
 Date: 2026-06-08
   Bugfixes:

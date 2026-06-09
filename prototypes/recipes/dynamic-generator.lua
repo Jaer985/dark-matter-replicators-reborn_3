@@ -63,6 +63,39 @@ local function get_tech_icons(name, target, tier)
     return icons
 end
 
+-- Helper to determine category for grouped technologies
+local function get_item_category(name, target)
+    local subgroup = target.subgroup or ""
+    local type_name = target.type or ""
+
+    if mods["space-age"] then
+        local item_proto = data.raw[target.type] and data.raw[target.type][name]
+        local is_organic = false
+        if item_proto then
+            if item_proto.spoil_ticks or item_proto.spoil_to or item_proto.spoil_result then
+                is_organic = true
+            end
+        end
+        if is_organic or string.find(name, "yumako") or string.find(name, "jellynut") or name == "spoiled-organic-substrate" or name == "nutrients" then
+            return "organic"
+        end
+    end
+
+    if type_name == "fluid" then
+        return "chemical"
+    elseif string.find(name, "ore") or string.find(subgroup, "ore") or subgroup == "raw-resource" then
+        return "ore"
+    elseif string.find(name, "science%-pack") then
+        return "science"
+    elseif string.find(name, "module") or subgroup == "module" then
+        return "module"
+    elseif string.find(name, "plate") or string.find(name, "alloy") then
+        return "alloy"
+    else
+        return "general"
+    end
+end
+
 local DynamicGenerator = {}
 
 -- Main entry point to run the dynamic generation
@@ -83,7 +116,10 @@ function DynamicGenerator.generate()
     -- Retrieve settings safely
     local fluid_qty = helpers.get_startup_setting("replication-fluid-quantity", 25)
     local return_ratio = 0 -- Disabled since replication requires no dark-matter input
-    local use_individual_techs = helpers.get_startup_setting("dmrsa-individual-techs", true)
+    local tech_dist = helpers.get_startup_setting("dmrsa-tech-distribution", "Grouped Categories")
+    local use_individual_techs = (tech_dist == "Individual Technologies")
+    local use_grouped_techs = (tech_dist == "Grouped Categories")
+    local group_accum = {}
 
     -- Track recipes to unlock via baseline replication technologies (fallback when individual techs is disabled)
     local baseline_unlocks = {
@@ -392,6 +428,38 @@ function DynamicGenerator.generate()
                     data:extend({ tech_proto })
                     tech_count = tech_count + 1
                 end
+            elseif use_grouped_techs then
+                local item_cat = get_item_category(name, target)
+                local group_key = planet_suffix and (planet_suffix .. "-" .. item_cat) or (tier .. "-" .. item_cat)
+                
+                if not group_accum[group_key] then
+                    group_accum[group_key] = {
+                        recipes = {},
+                        tier = tier,
+                        planet_suffix = planet_suffix,
+                        category = item_cat,
+                        items = {},
+                        original_techs = {}
+                    }
+                end
+                
+                local group = group_accum[group_key]
+                table.insert(group.recipes, recipe_name)
+                if return_ratio > 0 and output_qty > 0 then
+                    table.insert(group.recipes, derepl_recipe_name)
+                end
+                table.insert(group.items, { name = name, target = target })
+                
+                local original_recipe = data.raw.recipe[name]
+                if original_recipe then
+                    local recipe_obj = CostSolver.recipe_map[name]
+                    if recipe_obj then
+                        local original_tech = CostSolver.recipe_tech_map[recipe_obj.name]
+                        if original_tech then
+                            group.original_techs[original_tech.name] = true
+                        end
+                    end
+                end
             else
                 -- Fallback traditional tech binding: attach to original or baseline techs
                 local original_recipe = data.raw.recipe[name]
@@ -429,6 +497,170 @@ function DynamicGenerator.generate()
             end
         end
         ::continue_item::
+    end
+
+    if use_grouped_techs then
+        local cost_multiplier = helpers.get_startup_setting("dmrsa-grouped-tech-cost-multiplier", 5.0)
+        for group_key, group in pairs(group_accum) do
+            local tier = group.tier
+            local category = group.category
+            local planet_suffix = group.planet_suffix
+            local num_items = #group.items
+
+            if num_items > 0 then
+                -- representative item
+                local rep_item = group.items[1]
+                local tech_name = gprefix .. "grouped-repl-" .. group_key .. "-tech"
+
+                -- Effects: unlock all recipes in group
+                local tech_effects = {}
+                for _, r_name in ipairs(group.recipes) do
+                    table.insert(tech_effects, { type = "unlock-recipe", recipe = r_name })
+                end
+
+                -- Prerequisites mapping
+                local prerequisites = {}
+                local function add_prereq(tbl, p)
+                    for _, v in ipairs(tbl) do
+                        if v == p then return end
+                    end
+                    table.insert(tbl, p)
+                end
+
+                -- A. Base machine unlocks
+                if planet_suffix then
+                    add_prereq(prerequisites, gprefix .. "replication-" .. planet_suffix .. "-tech")
+                else
+                    if mods["space-age"] and tier == 3 then
+                        add_prereq(prerequisites, gprefix .. "replication-2")
+                    else
+                        add_prereq(prerequisites, gprefix .. "replication-" .. tier)
+                    end
+                end
+
+                -- B. Previous tier same category unlock (progression chain)
+                if not planet_suffix and tier > 1 then
+                    local prev_key = (tier - 1) .. "-" .. category
+                    if group_accum[prev_key] and #group_accum[prev_key].items > 0 then
+                        add_prereq(prerequisites, gprefix .. "grouped-repl-" .. prev_key .. "-tech")
+                    end
+                end
+
+                -- C. Original items' technologies
+                for original_tech_name, _ in pairs(group.original_techs) do
+                    add_prereq(prerequisites, original_tech_name)
+                end
+
+                -- Research Materials using custom intermediate products
+                local research_packs = {}
+                if tier == 1 then
+                    table.insert(research_packs, { gprefix .. "tenemut", 1 })
+                elseif tier == 2 then
+                    table.insert(research_packs, { gprefix .. "dark-matter-scoop", 1 })
+                elseif tier == 3 then
+                    table.insert(research_packs, { gprefix .. "dark-matter-transducer", 1 })
+                elseif tier == 4 then
+                    table.insert(research_packs, { gprefix .. "matter-conduit", 1 })
+                elseif tier == 5 then
+                    table.insert(research_packs, { gprefix .. "matter-conduit", 1 })
+                    if planet_suffix == "aquilo" then
+                        table.insert(research_packs, { "cryogenic-science-pack", 1 })
+                    end
+                end
+
+                -- Planet Specific science add-on
+                if planet_suffix == "vulcanus" then
+                    table.insert(research_packs, { "metallurgic-science-pack", 1 })
+                elseif planet_suffix == "fulgora" then
+                    table.insert(research_packs, { "electromagnetic-science-pack", 1 })
+                elseif planet_suffix == "gleba" then
+                    table.insert(research_packs, { "agricultural-science-pack", 1 })
+                end
+
+                -- Scale research cost based on settings and number of items
+                local base_repetitions = 10 * tier
+                local setting_multiplier = helpers.get_startup_setting("replresearch-item-multiplier", 25)
+                local reps_count = math.ceil(base_repetitions * (setting_multiplier / 25) * num_items * cost_multiplier)
+                reps_count = math.max(1, reps_count)
+
+                -- 5x time increase for time-gated research
+                local base_time = helpers.get_startup_setting("replresearch-item-time", 5)
+                local tech_time = math.max(1, math.ceil(base_time * 5))
+
+                -- Localized name: Replication: [Category] (Tier X) or (Planet)
+                local loc_name
+                if planet_suffix then
+                    loc_name = {
+                        "technology-name.dmrsa-grouped-repl-planet-tech",
+                        { "replcategory-name." .. category },
+                        { "?", { "planet-name." .. planet_suffix }, planet_suffix }
+                    }
+                else
+                    loc_name = {
+                        "technology-name.dmrsa-grouped-repl-tech",
+                        { "replcategory-name." .. category },
+                        tostring(tier)
+                    }
+                end
+
+                local tech_proto = {
+                    type = "technology",
+                    name = tech_name,
+                    localised_name = loc_name,
+                    localised_description = {
+                        "technology-description.dmrsa-repl-tech",
+                        { "replcategory-name." .. category }
+                    },
+                    effects = tech_effects,
+                    prerequisites = prerequisites,
+                    unit = {
+                        count = reps_count,
+                        ingredients = research_packs,
+                        time = tech_time
+                    },
+                    order = "a-r-g-" .. tier .. "[" .. category .. "]"
+                }
+
+                -- Layer custom border on technology icons using the representative item
+                tech_proto.icons = get_tech_icons(rep_item.name, rep_item.target, tier)
+                tech_proto.icon_size = 128
+
+                -- Fail-safe: validate science packs and prerequisites exist
+                local tech_valid = true
+                for _, pack in ipairs(research_packs) do
+                    if not helpers.item_exists(pack[1]) then
+                        helpers.log("WARN: Skipping group tech '" .. tech_name .. "': science pack '" .. pack[1] .. "' not found.")
+                        tech_valid = false
+                        break
+                    end
+                end
+                if tech_valid then
+                    for _, prereq in ipairs(prerequisites) do
+                        -- If it is one of our own grouped technologies, it is valid because we ensured it exists
+                        local is_our_grouped = string.sub(prereq, 1, string.len(gprefix .. "grouped-repl-")) == (gprefix .. "grouped-repl-")
+                        if not is_our_grouped and not data.raw.technology[prereq] then
+                            helpers.log("WARN: Skipping group tech '" .. tech_name .. "': prerequisite '" .. prereq .. "' not found.")
+                            tech_valid = false
+                            break
+                        end
+                    end
+                end
+
+                if tech_valid then
+                    data:extend({ tech_proto })
+                    tech_count = tech_count + 1
+                else
+                    -- Fallback: if technology is invalid (e.g. missing prerequisite), add recipes to baseline unlocks
+                    for _, r_name in ipairs(group.recipes) do
+                        if planet_suffix then
+                            table.insert(planetary_unlocks[planet_suffix], r_name)
+                        else
+                            table.insert(baseline_unlocks[tier], r_name)
+                        end
+                    end
+                end
+            end
+        end
     end
 
     helpers.log("Dynamically compiled: " .. recipe_count .. " replication recipes, " .. derepl_count .. " de-replication recipes, and " .. tech_count .. " technology nodes.")

@@ -145,11 +145,20 @@ data:extend({
 		minimum_value = 1
 	},
 	{
-		name = "dmrsa-individual-techs",
-		type = "bool-setting",
+		name = "dmrsa-tech-distribution",
+		type = "string-setting",
 		order = "5-1",
 		setting_type = "startup",
-		default_value = true,
+		allowed_values = { "Individual Technologies", "Base Game Technologies", "Grouped Categories" },
+		default_value = "Grouped Categories",
+	},
+	{
+		name = "dmrsa-grouped-tech-cost-multiplier",
+		type = "double-setting",
+		order = "5-1-a",
+		setting_type = "startup",
+		default_value = 5.0,
+		minimum_value = 0.1,
 	},
 	{
 		name = "dmrsa-cost-calculation-method",

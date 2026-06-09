@@ -92,15 +92,37 @@ if recipes then
     end
 end
 
--- 3. Clean up Replication Lab input items
+-- 3. Clean up Replication Lab input items and add dynamically required science packs
 local lab = data.raw.lab[gprefix .. "replication-lab"]
-if lab and lab.inputs then
+if lab then
+    lab.inputs = lab.inputs or {}
     local cleaned_inputs = {}
+    local lab_inputs_set = {}
     for _, input in ipairs(lab.inputs) do
         if item_prototype_names[input] then
             table.insert(cleaned_inputs, input)
+            lab_inputs_set[input] = true
         end
     end
+
+    -- Dynamically add any science packs required by our technologies
+    if data.raw.technology then
+        for tech_name, tech in pairs(data.raw.technology) do
+            if string.find(tech_name, "^" .. gprefix) then
+                if tech.unit and tech.unit.ingredients then
+                    for _, ingredient in ipairs(tech.unit.ingredients) do
+                        local pack_name = ingredient.name or ingredient[1]
+                        if pack_name and item_prototype_names[pack_name] and not lab_inputs_set[pack_name] then
+                            table.insert(cleaned_inputs, pack_name)
+                            lab_inputs_set[pack_name] = true
+                            helpers.log("Added science pack '" .. pack_name .. "' to replication lab inputs.")
+                        end
+                    end
+                end
+            end
+        end
+    end
+
     lab.inputs = cleaned_inputs
 end
 
