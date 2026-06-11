@@ -134,9 +134,13 @@ if techs then
             local prerequisites = tech.prerequisites
             if prerequisites then
                 local cleaned_prereqs = {}
+                local seen = {}
                 for _, prereq in ipairs(prerequisites) do
                     if techs[prereq] then
-                        table.insert(cleaned_prereqs, prereq)
+                        if not seen[prereq] then
+                            seen[prereq] = true
+                            table.insert(cleaned_prereqs, prereq)
+                        end
                     else
                         helpers.log("Removed missing prerequisite '" .. prereq .. "' from technology '" .. tech_name .. "'")
                     end
