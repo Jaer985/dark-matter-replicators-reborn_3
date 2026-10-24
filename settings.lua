@@ -38,6 +38,26 @@ data:extend({
 		default_value = "warn",
 	},
 	{
+		-- v4.3: where tenemut comes from.
+		--   "Ore patches" (default)     — historical behaviour: tenemut ore
+		--                                 generates in worldgen, and the
+		--                                 synthesizer machine does not exist.
+		--   "Ore patches + synthesis"   — the ore still generates AND the
+		--                                 Dark Matter Synthesizer is available.
+		--   "Synthesis only"            — tenemut is REMOVED from worldgen;
+		--                                 the synthesizer (electricity only) is
+		--                                 the only source.
+		-- The resource prototype itself is always kept (save compatibility:
+		-- maps already generated keep their patches); only its autoplace spec,
+		-- the autoplace-control and the planet map-gen injection are gated.
+		name = "dmrsa-tenemut-source",
+		type = "string-setting",
+		order = "1-0-1",
+		setting_type = "startup",
+		allowed_values = { "Ore patches", "Ore patches + synthesis", "Synthesis only" },
+		default_value = "Ore patches",
+	},
+	{
 		name = "tenemut-near-spawn",
 		type = "bool-setting",
 		order = "1-1-0",
@@ -65,7 +85,7 @@ data:extend({
 		type = "double-setting",
 		order = "1-1-4",
 		setting_type = "startup",
-		default_value = 2,
+		default_value = 1.6, -- v4.2.2: B2 balance (1/1.6/2.56/4.1/6.55 ramp) — was 2 (pre-B2 stale, R1)
 		minimum_value = 0.001
 	},
 	{
@@ -169,6 +189,17 @@ data:extend({
 		setting_type = "startup",
 		default_value = 25,
 		minimum_value = 1
+	},
+	{
+		name = "dmrsa-tenemut-research-required",
+		type = "bool-setting",
+		order = "3-2-4",
+		setting_type = "startup",
+		-- v4.3: when disabled, the DMR material packs (tenemut, scoop,
+		-- transducer, conduit) are no longer required to research replication —
+		-- the techs use the vanilla science packs of their own tier instead.
+		-- Nothing else changes: the packs stay craftable/usable.
+		default_value = true,
 	},
 	{
 		name = "dmrsa-tech-distribution",

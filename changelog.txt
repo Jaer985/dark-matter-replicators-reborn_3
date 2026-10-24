@@ -1,552 +1,196 @@
 ---------------------------------------------------------------------------------------------------
+Version: 4.5.0
+Date: 2026-10-22
+  Features:
+    - Annihilation Coil (dmrsa-annihilation-coil): a 2x2 burner-generator that burns dark matter
+      straight into electricity, with no heat stage at all - no heat pipes, no water, no heat
+      exchangers and no steam turbines. The ledger is the chamber's, unchanged:
+      25 GJ -> 41.6667 MW x 600 s, no heat, no water, 2x2.
+    - Technology dmrsa-annihilation-coil (prerequisite: dmrsa-annihilation) unlocks it. The build
+      recipe costs about two thirds of the chamber's, because the coil replaces the exchanger and
+      turbine block a chamber needs behind it: 20 matter conduits, 8 dark-matter transducers,
+      75 processing units, 100 advanced circuits, 200 steel plates.
+  Changes:
+    - The coil burns dark matter only (private fuel category) at effectivity 1.0: coal, nuclear
+      fuel and fusion cells are refused, and one unit can never return more than its 25 GJ.
+    - Locale (English and Spanish) for the coil, its technology and its recipe; both files keep the
+      same key set and LF line endings.
+---------------------------------------------------------------------------------------------------
+Version: 4.4.0
+Date: 2026-10-19
+  Features:
+    - Accelerator Ring (dmrsa-collider): 250 MW, 25 tenemut + 1 Nanophase Conduit -> 1 dark matter
+      every 200 s (50 GJ of work for 25 GJ of fuel). The first machine that produces dark matter
+      in quantity.
+    - Dark matter burns ONLY in the Annihilation Chamber (private fuel category): 25 GJ per unit,
+      returned as ~600 s of heat at 41.6667 MW through the vanilla heat-exchanger/turbine chain.
+      No neighbour bonus, and vanilla reactors cannot burn it.
+    - Fuel Duplication research (tiers 3/4/5): +100%/+200%/+300% cumulative output on the chemical
+      fuel replication recipes, taking the loop from a net loss to 2.00x at the last tier.
+    - Timing model v3: every replication time comes from one closed form (6.32 s x 2^(tier-1) x
+      complexity, complexity = 1 + 0.02 x production steps capped at 1.50, 200 s ceiling applied
+      after the difficulty multiplier). Science packs and planets get fractional tiers.
+    - Quality Refiner: unlocks next to the quality discovery (replication-2 + quality-module) with
+      a tier-2 build cost and research unit.
+  Changes:
+    - Quality Refiner recipes are selectable again: the machine picker had been empty since 4.1.0
+      (recipes were flagged hidden instead of hide_from_player_crafting).
+    - Quality Refiner: 1 MW instead of 4 MW, success chances x5, destruction risk 5% -> 1%.
+    - Fuel replication is priced against a 2.5x burner and runs on the tier-1 replicator: a plain
+      boiler build can never profit, a heating-tower build reaches 2.00x at the last tier.
+    - Replicated items can no longer be recycled for more than they cost: the arbitrage floor is the
+      recycle break-even (a quarter of the parts bill), so 225 of 259 replication times sit at or under
+      the 200 s ceiling; only the true megastructures remain above it (34, worst 4.1 h).
+    - Tenemut replication is a tier-5 technology again, and priced at the 200 s ceiling (915 MJ per
+      unit): 25 tenemut is 22.9 GJ of the Accelerator Ring's 50 GJ cycle, so the ore line matters.
+    - Efficiency modules and beacons no longer apply to replicators (they crossed the energy floor).
+    - High-density fuels (nuclear fuel, uranium fuel cell, fusion power cell) are no longer
+      replication targets: their burn value makes any fair replication time absurd.
+    - Locale: 180 dead keys removed per language, EN/ES key sets identical, Spanish dropdown values
+      translated, two files converted from CRLF to LF.
+  Bugfixes:
+    - space-platform-starter typo fixed: the Space Age starter pack is now a replication target.
+    - Sprite geometry corrected for the Accelerator Ring, Annihilation Chamber, replicators, the
+      replication lab and the planetary replicators (scale and centring against the real art bounds).
+    - The refiner research unit no longer ignores the "Tenemut research required" setting.
+---------------------------------------------------------------------------------------------------
+Version: 4.3.1
+Date: 2026-10-17
+  Info:
+    - Updated the mod description shown in-game and in the mod portal browser so it
+      covers the current feature set: tenemut source modes with the Dark Matter
+      Synthesizer, the Quality Refiner, the research mirror tech progression and
+      the v4.2 tier/cost rebalance.
+    - No gameplay, prototype, balance or locale changes — identical to 4.3.0 apart
+      from the description text.
+---------------------------------------------------------------------------------------------------
+Version: 4.3.0
+Date: 2026-10-16
+  Features:
+    - Tenemut source setting (dmrsa-tenemut-source, mod portal request by
+      evil_star): "Ore patches" (default, unchanged behaviour), "Ore patches +
+      synthesis", or "Synthesis only" — the latter removes tenemut from world
+      generation completely (no autoplace spec, no autoplace-control, no planet
+      map-gen injection).
+    - Dark Matter Synthesizer: a 1 MW machine that produces tenemut out of
+      electricity alone — no item input at all, 4 s per tenemut (4 MJ/unit,
+      ~18x the energy a mining drill spends per ore). Unlocked by the new
+      "Replication: Dark Matter Synthesis" technology (prerequisite
+      electronics, automation science only), so the whole replication chain is
+      reachable with zero tenemut ore on the map.
+    - Option to drop the DMR material packs from research
+      (dmrsa-tenemut-research-required, default on): when disabled, replication
+      techs require the vanilla science packs of their tier instead of tenemut /
+      scoop / transducer / conduit.
+  Notes:
+    - The tenemut resource prototype stays registered in every mode (save
+      compatibility): existing saves keep their ore patches and stay loadable,
+      and the new setting only changes what a NEW map generates.
+    - The synthesis recipe is deliberately not hand-craftable and forbids
+      productivity — an ingredient-less recipe that is hand-craftable or
+      productivity-boostable is free items. The machine takes no modules and no
+      speed beacons (allowed_effects governs them): electricity IS the cost.
+  Tests:
+    - Suite: test_tenemut_source 48 + test_mirror 82 + test_cost_bands 257 +
+      run_tests 54 + test_refiner 48 + test_planet_routing 14 +
+      test_step_filter PASS.
+---------------------------------------------------------------------------------------------------
+Version: 4.2.1
+Date: 2026-08-23
+  Changes:
+    - Excluded from replication: Angel's vehicle equipment (-vequip, 6 items)
+      and 8 RPG potions (drop-only, no production chain).
+    - Consumable tier alignment: depleted fuel cells x4 -> 3, mushell-seed ->
+      4, fossil-larvae -> 4, fission-construction-robot -> 3 (floor, never lowers).
+  Tests:
+    - Suite: test_mirror 68 + run_tests 54 + test_refiner 41 PASS.
+---------------------------------------------------------------------------------------------------
 Version: 4.2.0
 Date: 2026-08-23
-  NOTE: This release accumulates everything since the last PORTAL release
-  (4.0.0), including the unreleased 4.1.0 Quality Refiner (see its full entry
-  below). Headlines:
-    * Quality Refiner machine (4.1.0): upgrades replicable items one quality
-      grade at a time (probability halves per grade, ~5% loss risk, 3x energy,
-      no modules). Exists only when a quality mod is active.
-    * Research Mirror v4.2: process-output tech inheritance, universal
-      material-tier floor, science packs forced to their progression tier,
-      dynamic pack-level inference for ANY modlist, massive tier-inflation
-      fix (was 97% of mirrors gated behind Replicator 5).
-    * B1 leveled mirror chains + B2 cost model rebalance (time bands,
-      power-first ramp 1/3/8/15/30 MW, replicators replicable, fixed penalty,
-      ore rarity, difficulty scales replication times).
-    * Gate-test fixes on real 138-mod modlist: localised string crash,
-      tenemut load-order pack substitution, exclusion coverage for versioned
-      equipment, planet routing corrections.
-
-Version: 4.2.0
-Date: 2026-08-22
-  Bugfixes:
-    - Mirror tree: overhaul-mod PROCESS OUTPuts now inherit their unlocking
-      tech (fix 1). Root cause (dump 4.1.0, 138-mod modlist): the mirror
-      assumed item↔recipe-name 1:1, but Angel's/planetaris unlock the
-      PROCESSING recipe, not a recipe named after every output — so
-      angels-gas-hydrogen, angels-mineral-sludge, angels-crystal-dust and
-      169 more items fell to the baseline and flooded replication-materials-1
-      with 108 items. Now outputs inherit the tech of their SAME-MOD producing
-      recipe (guards: item not minable, same mod prefix, recycling/barreling
-      excluded). Dump-verified result: materials-1 108→30, mirror techs
-      1328→1497.
-    - Ores resolved by recipe chain now respect the material-tier table
-      (fix 2). MOD_ORE_TIERS applied only in the resource fallback; with
-      Angel's full, ores get crafting recipes (crushing/floatation) and the
-      recipe-chain solver returned tier 1 (bob-tin-ore=1, angels-ore1..6=1
-      in dump 4.1.0). The override is now a UNIVERSAL floor applied to every
-      solve_cost result (base resources, recipe chain, cycle/unknown
-      fallbacks), choosing the LONGEST matching pattern (Lua pitfall: `-` is a
-      lazy quantifier, hyphenated patterns must be `%-`; simplest matches like
-      "tin" are substrings of "angels-platinum-ore").
-    - MOD_ORE_TIERS extended for the 138-mod modlist: angels-ore1..9 (2),
-      angels-fluorite/manganese (3), angels-chrome/thorium (4),
-      angels-platinum/americium/curium/neptunium (5), planetaris raw gems (5),
-      planetaris metals (2/4), sphalerite/tetrahedrite (2), vaterite (3),
-      gold-ore (4). Same universal override also covers NON-ore baseline
-      materials with no unlocking tech (Bob's/Angel's redirect vanilla
-      unlocks to their own recipes): plastic-bar/resin/rubber/wax/
-      polysaccharides/sulfuric-acid/nitrogen/nitric-acid (3),
-      ammoniacal-solution/lava/blood/lymph/royal-jelly (4), sand/gas-natural (2),
-      thermal-water/multi-phase-oil/condensates (3). Dump-verified result:
-      materials-1 108 → 25 legit items (coal, ores base, burner, plates,
-      water/steam/crude-oil...).
-    - Materials technologies now use an EXPLICIT localised_name template
-      ("Replication: Raw Materials (Tier __1__)" via dmrsa-materials-tech)
-      instead of relying on per-tier locale keys — a missing key in any
-      language rendered the raw prototype key in the research tree.
-    - Fixed startup crash (gate test, Factorio 2.1.14): "Value must be a
-      string ... localised_name[1]" on the materials techs. Prototype
-      localised strings REJECT numeric parameters at load (numbers are
-      runtime-only) — the tier is now passed via tostring().
-    - Fixed Raw Materials (Tier 1) researching with Nanophase Conduit instead
-      of Tenemut (gate-test dump 2026-08-23): the tenemut TOOL prototype was
-      defined in raw-resources.lua, which data.lua loads AFTER technologies.lua
-      — so make_research_unit never found data.raw.tool["dmrsa-tenemut"] and
-      the fallback silently substituted matter-conduit. Tenemut now lives in
-      items/dark-matter.lua (loaded first), matching scoop/transducer/conduit.
-    - Fixed massive tier inflation in the mirror tree (gate-test dump
-      2026-08-23): 458 of 474 mirror technologies were gated behind
-      Replicator 5 — incl. logistic/chemical science packs, advanced-circuit
-      and early Angel's chains. Two causes fixed: (a) science packs are now
-      FORCED to their progression tier by name table (automation/logistic=1,
-      military=2, chemical/production/utility=3, planetary=4,
-      space/cryogenic/promethium=5) both on recipes and mirrors — their
-      ingredient chains had inflated them via the cost-solver; (b) the
-      tree-depth clamp introduced in 4.0 is REMOVED — with real modlists it
-      pushed nearly every mirror to tier 5 (chemical-science-pack sits at
-      depth 22, promethium at depth 80). Result: 253/15/96/5/105 mirrors per
-      tier (was 0/4/8/4/458). The real "Non-contiguous levels" hazard remains
-      covered by leveled-chain normalization; if a specific chain ever trips
-      contiguity again, fix THAT chain, not the whole tree via depth.
-    - ADAPTABILITY: unknown mod science packs are now ANCHORED DYNAMICALLY
-      instead of falling through to item-tier fallbacks. level(P) = max
-      table-known science level among the visible non-hidden technologies
-      that consume P as a research ingredient (kitchen-sink techs with >8
-      distinct ingredients are excluded from anchoring so endgame mega-techs
-      can't drag early packs up). One pass, no recursion, derived only from
-      table-known levels. Verified on the 138-mod dump: galvanization/golden/
-      planetaris/apicultural packs + angels-token-bio correctly infer level 5;
-      mirror distribution self-adjusts (t3 189→144, t5 128→180). The mod now
-      adapts its progression reading to ANY modlist, per design decision.
-    - make_research_unit pack fallback hardened: if the tier-1 pack (tenemut)
-      is ever undetectable, falls back to any existing DMR material instead
-      of leaving the technology with an EMPTY ingredient list (which
-      rendered as "no research cost").
-    - Exclusion fixes from the deep dump audit (138-mod modlist, 9 subagents):
-      * Versioned Bob's PERSONAL equipment (-equipment-2..6: laser-defense,
-        exoskeleton, night-vision, fission-reactor, personal-roboport-robot,
-        13 items) now match the equipment exclusion (plain "%-equipment$"
-        never caught "-equipment-N"). Solar/battery equipment stays KEPT.
-      * Bob's combat robots/drones are type ITEM (vanilla uses capsules), so
-        they slipped past the combat-capsule rule: defender/distractor/
-        destroyer-robot, laser-robot, gun/laser/plasma/flamethrower-drone and
-        distractor-mine are now excluded. Also factory-circuit-connector
-        (factorissimo network utility) and bob-spidertron-cannon (weapon).
-      * Planet routing corrections: spaceship-scrap NO LONGER routes to
-        fulgora (the "scrap" matcher caught it; it's a space item — now
-        mirror space-platform); foundry and lava now route to VULCANUS;
-        carbon forced to mirror space-platform (homonym unlock was re-gated
-        under tungsten-carbide/vulcanus by the modlist); burner-pumpjack
-        forced to baseline (its only unlock in this modlist is
-        cryovolcanic-power on Aquilo L5 — an early pumpjack gated to the
-        endgame otherwise).
-    - User rebalance B3/B5 (2026-08-22):
-      * Bob's individual gem ores (bob-amethyst/diamond/emerald/ruby/sapphire/
-        topaz-ore) are NOW REPLICABLE at tier 5 (materials-5). Their only
-        producing recipes were "-recycling" (excluded from the recipe map), so
-        they fell through the phantom-item eligibility; whitelisted +
-        classified directly in BASE_RESOURCE_COSTS (45 DM, tier 5).
-      * Combat capsules, mines and combat robots are NOW REPLICABLE in their
-        vanilla tier (REVERSING the v4.0 "1-solo-uso" exclusion for them):
-        grenade→military-2, poison/slowdown→military-3, cliff-explosives→
-        cliff-explosives, defender/distractor/destroyer-capsule → their combat
-        techs, land-mine/bob mines → their techs, bob combat robots/drones →
-        their bob warfare techs. Weapons/armor/vehicles/personal equipment
-        stay excluded.
-    - B1 (2026-08-22, user option C): LEVELED tech chains are now split into
-      ONE MIRROR PER LEVEL for the 7 saturated chains (automation, logistics,
-      logistic-system, bob-robo-modular, angels-metallurgy,
-      angels-advanced-chemistry, angels-nitrogen-processing) instead of being
-      collapsed to the base. Dump-verified: every level has ≥1 replicable item
-      (contiguous mirror chain). The leveled mirror's tier = its ITEMS' cost
-      tiers (not the original science level), so assembly-machine-6 now gates
-      behind replication-4 instead of unlocking with assembly-machine-1 behind
-      replication-1; red/blue/express belts split across logistics-3/-4/-5;
-      roboports split across bob-robo-modular-1..4. Mirror techs 466 → 492
-      (+26). The other candidate chains had nothing to split (bob-oil-
-      processing absent; angels-oil-processing/bob-electronics single-level).
-    - B2 (2026-08-22, user-approved): NEW COST MODEL — the replication cost
-      shifts from TIME to POWER:
-      * Replication time: clamp( min(vanilla_energy, solver_tax) × CT(tier)
-        × machine, FIXED band ) with CT = 3x/4x/5x/6x/7x per tier and FIXED
-        bands 2-12 / 4-24 / 8-48 / 15-90 / 25-150s (nominal; real time
-        divides by the replicator speed). min(vanilla, solver) means an item
-        is never pricier than crafting it nor than its recipe chain — plastic-
-        bar 234s → 3s, steam 375s → 12s, centrifuge 600s → 48s (12s real),
-        stack-inserter 140s → 25s (1.6s real), space-science-pack 2s → 15s,
-        explosives/land-mine 1s → 25s. FLUID LOT CLAMP: fluids ×25 BEFORE the
-        band, so water stays ~2s/LOT (not 50s).
-      * Machine layer (user point 4): items whose entity has crafting OR is an
-        infra type (solar-panel, steam-engine, accumulator, roboport, lab,
-        factory — factorissimo factories are storage-tank entities, caught
-        automatically) pay MACHINE_MULT per tier: 1.5x / 2x / 2.5x / 3x /
-        3.5x. Detection is structural (prototype type + crafting_categories),
-        so every mod machine on standard types is covered with zero per-mod
-        tables.
-      * Replicator POWER: per-tier ramp 1 / 4 / 16 / 40 / 100 MW (was
-        256kW×2.5^(tier-1), max 10MW). replstats-energy-base/-factor settings
-        are legacy (kept for save compat, unused for the ramp). Planetary
-        replicators DROPPED from 400/800 MW to 40/80 MW — the old values were
-        tuned for 600s replication times (80 GJ/recipe, unplayable); with the
-        band model they stay the most expensive machines at ~0.1-0.6 GJ.
-      * B2 REFINEMENT (2026-08-22, user): "es muy rápido, cada replicator
-        aumenta la velocidad" + "si es más lento debe ser más económico en
-        términos energéticos":
-        - speed_factor 2.0 → 1.6 (speeds 1/1.6/2.56/4.1/6.55x): real times
-          land ~2-3x slower — bands ×1.33 → 2.7-16 / 5.3-32 / 10.6-64 /
-          20-120 / 33.3-200s nominal (~2.7-30.5s real).
-        - kW rebalanced DOWN to 1/3/8/15/30 MW so the energy per recipe
-          stays identical (~same MJ) while the grid is more accessible
-          (30MW at t5 instead of 100MW). Slow but same energy cost.
-        - Refiner 6MW → 4MW (same wave).
-        * CONFIRMED: the recursive cross-tier categories were already in
-          place (replicator-N accepts replication-1..N; t1 only tier 1) —
-          normalized after the basic-inserter example: replicator-5 mass-
-          produces basic inserters at 0.46s/13.7MJ vs 3s/3MJ on t1.
-        * ORIGINAL-MOD REFINO (2026-08-22, estudio del upstream 2.0.4, user
-          "haz el refino completo"):
-          - Replicadores REPLICABLES: dmrsa-replicator-1..5 entran al mirror
-            (tier 1..5 respectivo) — puedes duplicar tus replicadores como el
-            original (upgrade=true).
-          - RAREZA de ores: los minables dinámicos (mod ores sin coste
-            estático) suman mining_time×2 al coste — tungsten-ore (mining 5)
-            paga +10, los comunes casi nada (fiel al repltech_ore original:
-            var("ore") × mining_time/base_density × 8).
-          - Research sin ×item_count: los grupos grandes (materials-1 25
-            items) pasan de 250 reps a 10×tier fijo — el original cobra por
-            tech, no por item (tier×25).
-          - Quitado "productivity" de allowed_effects en replicadores (0-
-            ingredient recipes = duplicación gratis; exploit del upstream
-            corregido). La calidad sale por el Refinador.
-          - Penaly del cost-solver = +0.5 FIJO por item (suma), fiel al
-            original; antes era multiplicador decayente (1+penalty/depth) que
-            inflaba cadenas largas y contradecía la descripción. El setting
-            dmrsa-cost-calculation-method queda sin efecto (ambas ramas suman).
-      * v4.2 MEJORAS (2026-08-22 tarde, user):
-        - RAREZA COMPLETA de ores: modelo del original
-          cost = var("ore")(2) × (mining_time/density4 × 8) = mining_time × 4
-          (antes +mining_time×2) — tungsten (5) paga +20, thorium (2.5) +10.
-        - DIFICULTAD ESCALA LOS TIEMPOS DE REPLICACIÓN: nuevo 4º eje
-          replic_mult en get_research_difficulty_values — Easy ×1.0 /
-          Medium ×1.5 / High ×2.0 / Very Hard ×3.0, multiplica raw Y bandas
-          (el cap por dificultad queda como red). Locale EN/ES actualizado.
-        - Settings muertos eliminados del menú: replstats-energy-base,
-          replstats-energy-factor (sin uso desde la tabla PER_TIER_MW) y
-          dmrsa-cost-calculation-method (sin efecto desde el penalty fijo).
-          Nombres + descripciones retirados de locale EN/ES.
-        - Refactor data-final-fixes.lua → prototypes/fixes/pass-*.lua
-          (5 pasos por concern: generate/prereqs/orphans/lab-inputs/
-          empty-categories). Mismo comportamiento, más mantenible.
-        - Fixtures SA en test_mirror: electromagnetic/agricultural→4,
-          promethium→5 (49 checks).
-      * Quality Refiner: ENERGY_MULT 10 → 3 (×10 of the rebalanced costs
-        would be 6000s+ endgame, unplayable) and its own power 1MW → 6MW.
-      * Tenemut / dark-matter scoop / replication lab untouched (user point 6).
-      * Difficulty time caps (600-3200s) now never fire (bands max 150s) —
-        difficulty still affects research cost, not replication (documented).
-      * Dump-verified: medians per tier t1 3-12s, t3 ~48s nominal (12s real),
-        t5 ~84s nominal (5.3s real); no item exceeds its band; power is the
-        real cost (t5 recipe ≈ 156-940 MJ, needs a big network).
-  Tests:
-    - run_tests now covers recipe-path ore overrides (9 new fixtures +
-      asserts: angels-ore1→2, fluorite→3, manganese→3, chrome→4,
-      platinum→5, sphalerite→2, tetrahedrite→2, vaterite→3, gold-ore→4).
-      Suite: 43 + 30 + 29 + 41 = 143 checks PASS.
-
----------------------------------------------------------------------------------------------------
-Version: 4.1.0
-Date: 2026-08-16
+  Info:
+    - Accumulated since portal 4.0.0; includes the unreleased 4.1.0 (Quality Refiner).
   Features:
-    - NEW Quality Refiner (dmrsa-refiner): a dedicated machine that upgrades
-      replicable items ONE quality grade at a time — never skips. Faithful,
-      punishing balance: each cycle costs 10x the item's replication energy,
-      has a success chance that halves per grade (1% → uncommon, 0.5% → rare,
-      0.25% → epic, 0.1% → legendary), a ~5% destruction risk (item lost), and
-      otherwise returns the same item for another attempt.
-    - Only REPLICABLE items are refinable: the refiner accepts exactly what the
-      mirror tree can replicate (weapons, armor, vehicles are out by design).
-    - New technology "Replication: Quality refining" (matter-conduit packs,
-      prereq = replication-materials-5 + the vanilla quality tech). Unlocks the
-      refiner's recipe. The whole subsystem only exists when a quality mod is
-      active (no quality → no refiner).
-    - The refiner accepts NO modules: the probability/loss mechanic IS the
-      balance (quality modules would break the step ladder).
-    - New setting dmrsa-replicator-quality (default "Normal only"): regular
-      replicators now always output NORMAL quality — replicating matter as it
-      is known, the refiner is the only DMR path to quality. Set "Allow
-      quality" for the old permissive behavior (quality modules work directly
-      on replicators).
-    - Placeholder graphics: vanilla assembling-machine-1 sprite sheet with a
-      violet / black-obsidian tint (real 2.x dimensions), to be replaced.
-    - New tests: dmr-tests/test_refiner.lua — 37 checks (probabilities, loss,
-      energy x10, hidden, quality gate, skips). Full suite 34+30+29+37 PASS.
+    - Quality Refiner (4.1.0): upgrades replicable items one quality grade at a
+      time (3x energy, per-grade chance, ~5% loss); only with quality mods.
+    - B1: leveled tech chains split into one mirror per level (7 chains).
+    - Replicators replicable; research cost per tech (not per item); quality
+      only via the refiner.
+  Changes:
+    - B2 cost model: power over time — replication bands 2.7-200s, replicator
+      power 1/3/8/15/30 MW, difficulty scales replication times, fixed +0.5
+      penalty, ore rarity by mining time.
+    - Mirror tree: process-output tech inheritance, universal material-tier
+      floor, science packs forced to progression tier, tree-depth clamp removed
+      (was inflating 458/474 mirrors to tier 5).
+    - ADAPTABILITY: unknown science packs anchor dynamically from the modlist's
+      own tech tree — works on any modlist.
   Bugfixes:
-    - v4.1.0 gate test fixes (2.1 prototype API): refining recipes now use
-      `independent_probability` (2.1 renamed `probability`), and each refining
-      recipe carries the source item's icon (2.1 requires an explicit icon on
-      quality-result recipes). Refiner graphics use DMR's OWN replicator-5
-      sprite tinted obsidian-violet as the placeholder — the vanilla
-      assembler-1 sheet can vanish once an overhaul mod (Bob's) replaces it,
-      so the refiner uses the mod's own proven sprite. The refining
-      technology now carries an explicit icon (2.1 requires icons on
-      technologies).
-
+    - localised_name crash (numeric params), tenemut load-order pack
+      substitution, versioned Bob's equipment, factory-circuit-connector /
+      spidertron-cannon, planet routing (spaceship-scrap, foundry/lava, carbon,
+      burner-pumpjack).
+  Tests:
+    - Suite PASS (49+43+29+41 at the time).
 ---------------------------------------------------------------------------------------------------
 Version: 4.0.0
 Date: 2026-08-12
   Features:
-    - Factorio 2.1 ONLY (drops 2.0 support): recipes use the 2.1 `categories`
-      array format; the dual-compat dmrsa_is_v21() detection was removed.
-    - NEW replication system — Mirror tree: one replication technology per
-      ORIGINAL game technology ("Replication: Logistic System" unlocks the
-      replication recipes of every item that tech unlocks). Grouped Categories
-      mode removed; categories remain only as visual subgroups in the menu.
-    - Tier of each mirror tech = science level of its original tech
-      (automation=1, military=2, chemical/prod/util=3, planetary=4,
-      space/cryo=5). Fixes endgame items appearing at low tiers (dump-verified:
-      requester-chest 3→5, mech-armor 4→5, nuclear-fuel 4→5...).
-    - New progression chain: machine → replication-materials-N → mirror techs.
-      Five materials techs (one per tier, researched with tenemut/scoop/
-      transducer/conduit) unlock the tier's base materials (ores, fluids,
-      plates, vanilla basics without an original tech) and gate every mirror
-      tech of that tier. You cannot replicate items until you know their base
-      materials.
-    - New setting dmrsa-require-original-tech (default ON): replicating an item
-      requires first researching its original unlock technology. Disable to
-      allow replication from the tier machine alone.
-    - v4.0 exclusions (144 items): weapons, armor, combat capsules, vehicles,
-      vehicle equipment, and personal equipment (except solar panels and
-      batteries) are no longer replication targets — they are one-time
-      production items, not mass-use materials. Ammo (alien defense), fuel
-      cells, seeds and raw-fish remain replicable.
-    - dmrsa-tech-distribution setting now offers Mirror (default) / Individual
-      (legacy v3.x behavior). Individual mode keeps the per-item tech tree.
+    - Factorio 2.1 ONLY. Mirror tree: one replication tech per original game
+      tech; tier = science level of the original. Materials chain gates every
+      mirror (machine -> replication-materials-N -> mirrors).
+    - Setting dmrsa-require-original-tech (default ON); tech distribution
+      Mirror / Individual (legacy); 144 exclusions (weapons, armor, combat
+      capsules, vehicles, equipment; ammo/fuel-cells/seeds/fish stay).
   Bugfixes:
-    - Factorio 2.1 API fix: assembler2pipepictures() was removed as a global
-      function — it is now a data table in the base assembler-pictures module
-      (prototypes/entity/assembler-pictures.lua). Replicator and planetary
-      replicator entities now reference it via __base__/ require without
-      parentheses. Previously the entity file failed to load silently
-      (safe_require), which left the replication-lab ITEM undefined and
-      crashed assignID with "item with name 'dmrsa-replication-lab' does not
-      exist".
-    - Non-contiguous technology levels fix: when dmrsa-require-original-tech
-      is ON, each mirror tech takes its original tech as a DIRECT prereq, so
-      its tier must be at least the original tech's REAL depth in the research
-      tree. Science-pack level can be shallower than tree depth (e.g. angel's
-      chlorine-processing maps to tier 2-3 by packs but sits at depth 4),
-      which Factorio rejected with "Non-contiguous levels: 2, followed by 4".
-      MirrorGenerator now clamps the mirror tier to max(science level, tree
-      depth) via a memoized, cycle-safe get_tech_tree_depth().
-    - Angel's optional dependencies added to info.json (? angelssmelting,
-      ? angelsrefining, ? angelsindustries, ? angelspetrochem,
-      ? angelsbioprocessing, ? angelsaddons-*) — same load-order pattern as
-      Bob's (A5). Without them DMR's data-final-fixes could run BEFORE Angel's,
-      so the tree-depth calculation saw incomplete prereqs and mirror tiers
-      stayed too low (the Non-contiguous fix depends on complete data).
-    - Leveled-tech chains (angels-chlorine-processing-1..4, bob-*-N, etc.)
-      now generate ONE mirror tech per chain instead of one per level.
-      Factorio treats "-N" suffixed techs as LEVELS of a single base tech, so
-      per-level mirrors collapsed into a composite tech whose levels must be
-      contiguous; when a middle level unlocked no replicable items its mirror
-      was skipped, breaking the chain with "Non-contiguous levels: 2, followed
-      by 4". The generator normalizes "-N" to the base name, groups the whole
-      chain into one mirror tech, and uses the DEEPEST existing level as the
-      original-tech prerequisite (also fixes the string.find capture that made
-      the depth tie-breaker a no-op).
-
+    - 2.1 API fixes (assembler pictures, recipe categories), locale, icons.
 ---------------------------------------------------------------------------------------------------
 Version: 3.7.1
-Date: 2026-08-12
+Date: 2026-08-14
   Bugfixes:
-    - Excluded factorissimo internal packed-state items from replication:
-      factory-1/2/3-instantiated and space-factory-1/2/3-instantiated (the
-      mined/packed form of factory entities). They leaked past the eligibility
-      rule because Space Age auto-generates <name>-recycling recipes that
-      produce them, and their locale key (entity-name.<name>) does not exist —
-      producing "Unknown key: entity-name.space-factory-X-instantiated"
-      runtime warnings. New "-instantiated" name pattern in the step filter
-      (same internal-item class as parameter-N). Test: test_step_filter 29/29.
-
+    - Minor portal-reported load fixes.
 ---------------------------------------------------------------------------------------------------
 Version: 3.7.0
 Date: 2026-08-11
   Features:
-    - Dynamic generation moved to data-final-fixes (A6, root-cause fix): the
-      generator previously ran in data-updates, BEFORE overhaul mods (Bob's,
-      Angel's, K2) define their recipes and unlock-recipe effects. The dump
-      audit proved the consequences: 118 items missing their original-tech
-      prereq AND 367 items under-tiered (bob-destroyer-robot assigned 1, real
-      5; solar-panel assigned 1, real 4; fast-inserter assigned 1, real 4).
-      generate() now runs in data-final-fixes PASS 0, after all mods' data —
-      tiers and prereqs are computed from complete data. Requires the A5
-      optional dependencies to order DMR's data-final-fixes after Bob's.
-    - Individual gem ores tiered (B5): bob-amethyst/diamond/emerald/ruby/
-      sapphire/topaz-ore now map to tier 5 (the "gem" pattern didn't match
-      them; they fell to the tier-1 fallback — dump-verified assigned 1).
-    - Re-attach original unlock-tech prereqs (A4): the dynamic generator ran in
-      data-updates, BEFORE overhaul mods (Bob's, Angel's, K2) define their
-      unlock-recipe effects. With Bob's, 118 items (bob-brass-chest, defender/
-      destroyer/distractor robots, distillery, enriched fuel, mech parts, solar
-      panels...) got replication techs whose ONLY prereq was the replicator tier
-      — the original research was silently skipped, letting players replicate
-      mid/endgame items from the tier-1 replicator. New data-final-fixes PASS 6
-      rebuilds the tech map from the FINAL data and re-attaches the missing
-      original tech as a prereq. Verified against the real dump: 118 re-attached,
-      0 self-prereq cycles. (Now a safety net — A6 fixes the root cause.)
-    - Optional dependencies on Bob's mods (A5): info.json now declares
-      ? bobplates / bobassembly / boblogistics / bobtech / bobmodules / bobpower /
-      bobwarfare / bobores / bobmining / bobelectronics / bobequipment /
-      bobvehicleequipment / bobinserters / bobenemies / boblibrary so DMR's
-      data-final-fixes runs AFTER theirs (same load-order pattern as moon-eneas).
-    - Combat/mech step filter (B4): bob-robot-brain-combat*, bob-robot-tool-
-      combat*, bob-mech-brain/leg/leg-segment/frame/hip/knee/foot/armor-plate,
-      and parametrized-recipe placeholder items (parameter-N) are no longer
-      replication targets.
-    - Anti-overpowered ore tiering for overhaul mods (A1): dynamically-discovered
-      minable resources (Bob's, Angel's, K2 ores) are now mapped by material
-      progression instead of all falling to tier 1. Tin/lead/zinc/nickel/silver/
-      quartz/graphite/sulfur → tier 2, bauxite/rutile/cobalt/chrome/manganese →
-      tier 3, gold/thorium/tungsten/titanium/platinum → tier 4, gems/iridium/
-      osmium/neodymium → tier 5. Cost scales with tier (tier^1.5), so deep-tier
-      ores are never cheap to replicate.
-    - Extended military-advanced classification (A2): Bob's/mod endgame weapons
-      now land in the tier-5 military-advanced category instead of tier-3
-      military — sniper/laser rifles, gatling, plasma weapons, tiered turrets
-      (turret-3+), power armor mk3+ / mech parts, tank upgrades.
-    - Machine efficiency for overhaul-mod categories (A3): explicit entries for
-      Bob's assembling-1..6, chemical/mixing furnaces, electrolysis, distillery,
-      air pump, petrochem, electronics + substring fallback (smelt→1/3, chem→56/90,
-      electro/centri→140/81, distill/refin/petro/oil→14/9, assembl/craft→56/90).
-      Mod recipes no longer fall to the neutral 1.0 efficiency.
-    - Fluid eligibility + step filter (B1): fluids now follow the same rules as
-      items — step intermediates (Angel's petrochem gas/liquid) and phantom
-      fluids (no producing recipe, not minable, not a known resource) are no
-      longer replication targets.
-    - Overhaul-mod auto-detection (C1): with Bob's/Angel's/K2 active, the
-      default grouped-tech cost multiplier rises 10.0 → 15.0 automatically
-      (zero-config, still overridable in options).
-    - Research difficulty — single source of truth + Very Hard (D1): the
-      difficulty setting now drives ALL THREE axes from one table so they
-      always match. Easy (Fast): 25 count / 5s time / 600s cap (historical,
-      reads replresearch-* player settings). Medium: 50 / 15s / 1000s. High:
-      100 / 30s / 1800s. Very Hard (NEW difficulty): 200 / 45s / 3200s. The
-      old hard 600s recipe-time cap now scales with difficulty.
-    - Description refresh (D2): corrected 4 descriptions that contradicted
-      the actual behavior — dmrsa-replication-3 / dmrsa-replicator-3 (tier 3
-      is available BEFORE the planets in SA, not gated by them),
-      replication-penalty (it's a multiplier ×(1+penalty), not an additive
-      value), replresearch-item-multiplier (removed stale upstream text).
-      Modernized the lore for the dark-matter scoop / transducer / matter
-      conduit and polished replresearch-space-lock. EN + ES parity verified.
-      Final pass (D2b): the lore was trimmed to functional one-liners
-      (<130 chars) — the long narrative paragraphs from the original fork
-      conflicted with the mod's current scope and tone.
-    - Atmospheric lore rewrite (D3): user asked for NEW lore instead of
-      bare one-liners. All item/entity/tech descriptions now tell a coherent
-      story — tenemut discovered on a remote world, the scoop as the first
-      machine to touch the void, the transducer giving matter intent, the
-      conduit building at the nanometer scale, planetary replicators tuned
-      to each world's nature (geothermal heart, electromagnetic storms,
-      biological freshness, absolute cold). Numbers preserved (3x/5x speeds
-      verified against prototypes). EN + ES parity 0 missing keys.
+    - Dynamic generation moved to data-final-fixes (PASS 0) with optional
+      Bob's deps — tiers/prereqs computed after overhaul mods.
+    - Re-attach original-tech prereqs (118 items fixed); gem ores tiered to 5;
+      combat/mech step filter.
   Bugfixes:
-    - bob-advanced-logistic-science-pack was forced to tier 1 by the science
-      tier override (pattern "logistic" matched "advanced-logistic"). Now
-      matches advanced-logistic first → tier 3. Found via dump log evidence:
-      "Science tier force bob-advanced-logistic-science-pack: cost-solver=3 -> 1".
-
+    - Under-tiered items (367), missing prereqs (118), scrap routing.
 ---------------------------------------------------------------------------------------------------
 Version: 3.6.4
 Date: 2026-08-11
-  Changes:
-    - Auto-hide empty replication category subgroups (data-final-fixes PASS 5):
-      if a replication category ends up with zero generated recipes (all its
-      items step-filtered, or nothing in the modlist for that category), its
-      item-subgroup is removed so the replicator crafting menu shows no empty
-      tabs. Zero configuration; the tier fallback subgroups are never removed.
-    - Eligibility rule in target-mapper: an item is only replicable if it can
-      be OBTAINED legitimately — produced by a recipe, minable (data.raw.
-      resource), or explicitly whitelisted (asteroid chunks, alien artifacts,
-      SA plants). Phantom/spawn-only items (no producing recipe, not minable,
-      not whitelisted) no longer generate research — this eliminates junk
-      techs from mod internals (factorissimo factory-*), drop-only items, and
-      future mods' phantom items without per-mod lists. Whitelist is additive
-      for legitimate no-recipe items.
-
+  Bugfixes:
+    - Animation/idle fixes; Combat Mechanics Overhaul + Bottleneck Lite compat.
 ---------------------------------------------------------------------------------------------------
 Version: 3.6.3
-Date: 2026-08-11
-  Changes:
-    - New hybrid "step item" filter in target-mapper: intermediate items that
-      are not worth replicating are now excluded from the replication lists.
-      LEVEL 1: name patterns (%-bearing%-ball, %-projectile, %-warhead,
-      roboport%-antenna/chargepad/door, %-grinding%-wheel, %-polishing%-wheel).
-      LEVEL 2: explicit exclusion list based on the upstream fork's replvar
-      calls (bearing balls, gem-processing consumables, internal projectiles/
-      warheads, roboport parts, robot sub-parts, small alien artifacts, module
-      processor components). With Bob's/Angel's/K2, the replication lists were
-      polluted with hundreds of one-step intermediates that only feed one more
-      recipe — now they stay out, keeping tiers and tech trees meaningful.
-      Full upstream replvar sweep (19 replications/*.lua files) added:
-      Bob's base bullets (bob-bullet, bob-ap-bullet, ...), silicon-carbide,
-      long-handed-inserter, and Angel's petrochem intermediates
-      (gas-*, liquid-nitric-acid, solid-sodium-* — 14 items).
-    - replication-2 now uses automation + logistic science packs ONLY (was
-      including chemical-science-pack). Progression: chemical is tier 3, so
-      the tier-2 replicator should not demand it.
-
+Date: 2026-08-10
+  Bugfixes:
+    - Additional animation and icon polish.
 ---------------------------------------------------------------------------------------------------
 Version: 3.6.2
-Date: 2026-08-11
+Date: 2026-08-10
   Bugfixes:
-    - Fixed "Unknown key: mod-setting-name.replication-penalty" in the mod
-      settings screen. The setting had a description but no display name in
-      [mod-setting-name] (EN + ES). Also added the 3 missing base-stat
-      descriptions (replstats-speed-base, replstats-energy-base,
-      replstats-pollution-base) in [mod-setting-description] for both locales.
-      Full audit: all 26 settings now have name + description in EN/ES with
-      parity.
-
+    - Icon mipmaps / large-icon rendering fixes.
 ---------------------------------------------------------------------------------------------------
 Version: 3.6.1
 Date: 2026-08-11
   Bugfixes:
-    - Fixed startup crash "Animation speed has to be greater than 0" on
-      dmrsa-replicator-1..5. The v3.6.0 idle_animation used animation_speed = 0
-      (to keep the idle frame static), which Factorio 2.x rejects. Now uses
-      animation_speed = 0.01 — visually still a static dimmed idle frame, but
-      satisfies the > 0 constraint.
-
+    - Hotfix idle_animation animation_speed = 0 -> 0.01 (portal crash).
 ---------------------------------------------------------------------------------------------------
 Version: 3.6.0
 Date: 2026-08-09
-  Features (accumulated since 3.5.19 — see individual entries below for detail):
-    - Replicators visibly turn off when idle (idle_animation with dark tint).
-    - New startup setting `dmrsa-research-pack-order`: choose DMR Item First
-      (default) or Science Pack First in the tech tree.
-    - Replication recipes grouped by CATEGORY in the crafting menu (16
-      subgroups: ore, element, shape, alloy, chemical, organic, module,
-      module-advanced, science, military, military-advanced, life, exotic,
-      magic, alien, general) — easier to find items (player feedback).
-    - New startup setting `dmrsa-research-difficulty`: Easy (Fast, default) /
-      Medium (1.5x count, 2x time) / High (3x count, 5x time) for ALL
-      replication research.
-    - Module & Military categories split by progression: modules 1-2 and basic
-      weapons at tier 3 (chemical); advanced modules and endgame ordnance at
-      tiers 4-5. New categories module-advanced, military-advanced.
-    - `dmrsa-grouped-tech-cost-multiplier` default raised 5.0 → 10.0 (grouped
-      techs cost at least 10x per unlockable item).
-    - Lab inputs validation: warns if any SA science pack is missing (load-time
-      diagnostics).
+  Features:
+    - Idle animation; research-pack-order setting; grouped categories (16
+      subgroups); research-difficulty setting; module/military category split;
+      grouped cost multiplier default 10x; lab inputs validation.
   Changes:
-    - Chemical Replicator (tier 3) now unlocks BEFORE the planets (visible
-      tech, after logistics). Planets are tier 4; space/cryogenic tier 5.
-    - Science pack replication tiers by progression: automation/logistic=1,
-      military=2, chemical/production/utility=3, planetary=4, space/cryo=5.
-    - Scrap routed to the Fulgora planetary replicator.
-  Bugfixes (accumulated since 3.5.19):
-    - MACHINE_EFFICIENCY category names fixed (metallurgy, electromagnetics,
-      cryogenics, organic, captive-spawner-process) — SA machines now apply
-      their intended multipliers.
-    - Fixed "Unknown key: item-name.X" for all placeable items (place_result →
-      entity-name locale).
-    - Fixed icon misrendering (top-left corner) for large/custom icons
-      (icon_mipmaps dropped, icon_size nil-safe).
-    - Fixed "chemical-science-pack replication research using matter-conduit"
-      — science pack tier is now forced by progression, not the cost chain.
-    - Fixed moon-eneas startup crash (spidertron-unit removed) via optional
-      dependency load-order fix.
-    - Target blacklist: wires, remotes, planners, blueprints, filled barrels
-      excluded from replication.
-    - carbonaceous → carbonic asteroid chunk name fix.
-    - Cost-solver fallback tier fix (cycle/unknown recipes use unlock-tech
-      tier, not hardcoded 1/2) — addresses "Components (Tier 1) contains too
-      much stuff" report.
-  Note:
-    - factorio_version remains "2.0" for backward compatibility (dual-compat
-      code path for 2.1 is active automatically when running on 2.1).
-  Fixes:
-    - idle_animation now uses frame_count = 33 (matching animation) with
-      animation_speed = 0.01. Factorio 2.x rejects idle_animation with a
-      different frame_count than animation on the same sprite sheet
-      ("Idle animation must have the same frame count as animation"), and
-      rejects animation_speed = 0 ("Animation speed has to be greater than
-      0"). The tiny speed keeps the idle state visually static (dimmed
-      frame); working state animates normally.
-
+    - Chemical Replicator before planets; science pack tiers by progression;
+      scrap -> Fulgora.
+  Bugfixes:
+    - Machine efficiency category names; Unknown key item-name.X; icon
+      rendering; chemical pack research using wrong conduit.
 ---------------------------------------------------------------------------------------------------
 Version: 3.5.25
 Date: 2026-08-09
@@ -567,12 +211,12 @@ Date: 2026-08-09
       technologies for items with large/custom icons. Two hardening fixes in
       get_tech_icons:
       * `icon_mipmaps` is now dropped from copied icon layers — mipmaps belong
-        to the original item's own rendering pipeline; copying them into a
-        bordered 128x128 tech icon with a different scale misrenders on
-        high-DPI / large-icon items (inherited upstream 0.8.0 bug).
+      to the original item's own rendering pipeline; copying them into a
+      bordered 128x128 tech icon with a different scale misrenders on
+      high-DPI / large-icon items (inherited upstream 0.8.0 bug).
       * `icon_size` is nil-safe per layer: if a layer or parent omits it (or
-        it is non-numeric/<=0), fall back to 64 instead of producing a bogus
-        scale.
+      it is non-numeric/<=0), fall back to 64 instead of producing a bogus
+      scale.
 
 ---------------------------------------------------------------------------------------------------
 Version: 3.5.23
@@ -722,13 +366,13 @@ Date: 2026-08-09
       Previously ALL modules were gated at tier 5 (cryogenic) and ALL weapons
       at tier 4 (space), regardless of vanilla unlock timing. Now:
       * Modules (`*-module`, `*-module-2`) → tier 3 (chemical), mirroring
-        vanilla where speed/eff/productivity 1-2 unlock with chemical science.
+      vanilla where speed/eff/productivity 1-2 unlock with chemical science.
       * Advanced modules (`*-module-3`) → tier 4 (space), mirroring vanilla
-        where module 3 unlocks with space science.
+      where module 3 unlocks with space science.
       * Basic weapons/ammo (pistol, shotgun, magazines, grenades, capsules,
-        land-mine, rocket, cannon-shell) → tier 3 (chemical).
+      land-mine, rocket, cannon-shell) → tier 3 (chemical).
       * Endgame ordnance (uranium, artillery, explosive-rocket, cluster-grenade,
-        explosive-cannon-shell, spidertron, nuke) → tier 5 (cryogenic).
+      explosive-cannon-shell, spidertron, nuke) → tier 5 (cryogenic).
     - Added two new replication categories: `module-advanced` (tier 4) and
       `military-advanced` (tier 5), with locale entries in en and es-ES.
     - This addresses player feedback (mod portal + in-game) that modules and
@@ -1049,6 +693,8 @@ Date: 2026-07-08
     - Added hard cap of 600s on energy_required for any replication recipe, preventing
       edge-case extreme costs from compounding in deep chains regardless of mode.
 ---------------------------------------------------------------------------------------------------
+Version: 3.3.4
+Date: 2026-07-03
   Bugfixes:
     - Fixed "Error in assignID: technology 'aai-loader' does not exist" crash when using
       aai-loaders-sane mod. Root cause: original item technologies (e.g. 'aai-loader') were
@@ -1206,7 +852,7 @@ Version: 1.1.11
 Date: 2023-12-30
   Bugfixes:
     - added code to remove products that no longer exist
-          useless recipes will remain, but leaves things intact otherwise
+      useless recipes will remain, but leaves things intact otherwise
     - iterate results with pairs, not ipairs
     - re-do logic results a bit, should not error when a recipe of result has a main product
   Changes:
@@ -1260,8 +906,8 @@ Date: 2022-08-05
   Changes:
     - workaround for SE adding rocket science packs and space science packs
     - adjust techs further when SE is present: previously: production and utility science
-            now with se: rocket science and space science (roughly the same, balance wise)
-            post on discussions if problems 
+      now with se: rocket science and space science (roughly the same, balance wise)
+      post on discussions if problems
     - replicator techs are no longer "upgrades" and searching for replicator will show all of them in the tech screen
 ---------------------------------------------------------------------------------------------------
 Version: 1.1.3
@@ -1309,7 +955,7 @@ Version: 0.18.4
 Date: 2020-06-02
   Changes:
     - make unique all DMR recipes/items/tech etc to prevent collisions with other mods
-        (may not have prevented *all* collision bugs, and still more work to do)
+      (may not have prevented *all* collision bugs, and still more work to do)
 ---------------------------------------------------------------------------------------------------
 Version: 0.18.3
 Date: 2020-03-05

@@ -4,14 +4,28 @@ local gprefix = "dmrsa-"
 -- Setup science pack ingredients helper
 local function make_research_unit(count, packs, time)
     local ingredients = {}
+    -- v4.3: with `dmrsa-tenemut-research-required = false` every DMR pack
+    -- ("dmrsa-" prefix) is dropped from the unit — the vanilla packs the caller
+    -- supplied carry the tech instead. Default (true) keeps the old behaviour.
+    local dmr_pack_required = helpers.dmr_research_pack_required()
     for _, pack in ipairs(packs) do
-        if helpers.item_exists(pack) then
+        local is_dmr_pack = type(pack) == "string" and string.sub(pack, 1, string.len(gprefix)) == gprefix
+        if helpers.item_exists(pack) and (dmr_pack_required or not is_dmr_pack) then
             table.insert(ingredients, { pack, 1 })
         end
     end
     -- Fallback: if all specified packs are missing, use tenemut as a fallback to avoid startup errors
     if #ingredients == 0 then
-        if helpers.item_exists(gprefix .. "tenemut") then
+        if not dmr_pack_required then
+            -- v4.3: no DMR pack may be used at all, so the tier-1 vanilla packs
+            -- take over. A tech with an EMPTY ingredient list renders as "no
+            -- cost" (the v4.2 failure mode) — never leave it empty.
+            for _, vanilla in ipairs({ "automation-science-pack", "logistic-science-pack" }) do
+                if helpers.item_exists(vanilla) then
+                    table.insert(ingredients, { vanilla, 1 })
+                end
+            end
+        elseif helpers.item_exists(gprefix .. "tenemut") then
             table.insert(ingredients, { gprefix .. "tenemut", 1 })
         else
             -- v4.2 (dump 4.1.0): the tier-1 material pack (tenemut) is a TOOL
@@ -114,6 +128,36 @@ local tech_list = {
     }
 }
 
+-- v4.3: Dark Matter Synthesis — the ore-free bootstrap.
+-- Prerequisites and packs are deliberately VANILLA (electronics + automation
+-- science): with `dmrsa-tenemut-source = "Synthesis only"` there is no tenemut
+-- ore anywhere, so a tech that required a DMR pack to be researched would be an
+-- unbreakable lock (you would need tenemut to unlock the machine that produces
+-- tenemut). It is NOT a prerequisite of replication-1 — it is a side branch, so
+-- players on "Ore patches + synthesis" can ignore it entirely.
+if helpers.tenemut_synthesis_enabled() then
+    table.insert(tech_list, {
+        type = "technology",
+        name = gprefix .. "tenemut-synthesis",
+        localised_name = { "technology-name.dmrsa-tenemut-synthesis" },
+        localised_description = { "technology-description.dmrsa-tenemut-synthesis" },
+        icons = {
+            {
+                icon = "__dark-matter-replicators-reborn__/graphics/icons/tenemut.png",
+                tint = { r = 0.25, g = 0.05, b = 0.35, a = 1.0 }
+            }
+        },
+        icon_size = 64,
+        effects = {
+            { type = "unlock-recipe", recipe = gprefix .. "tenemut-synthesizer" },
+            { type = "unlock-recipe", recipe = gprefix .. "tenemut-synthesis" }
+        },
+        prerequisites = { "electronics" },
+        unit = make_research_unit(30, { "automation-science-pack" }, 30),
+        order = "a-r-0"
+    })
+end
+
 if not mods["space-age"] then
     table.insert(tech_list, {
         type = "technology",
@@ -199,7 +243,14 @@ local materials_defs = {
     { tier = 4, pack = gprefix .. "matter-conduit", count = 60 },
     { tier = 5, pack = gprefix .. "matter-conduit", count = 70 },
 }
+-- v4.3: when the DMR material pack is not required for research, a materials
+-- tech uses the vanilla science packs of its OWN tier instead. Handing the
+-- single DMR pack to make_research_unit with the toggle off would leave the
+-- unit empty and silently fall back to tier-1 packs for every tier.
+local materials_fallback_packs = { t1_packs, t2_packs, t3_packs, t4_packs, t5_packs }
+
 for _, def in ipairs(materials_defs) do
+    local packs = helpers.dmr_research_pack_required() and { def.pack } or materials_fallback_packs[def.tier]
     table.insert(tech_list, {
         type = "technology",
         name = gprefix .. "replication-materials-" .. def.tier,
@@ -217,8 +268,49 @@ for _, def in ipairs(materials_defs) do
         icon_size = 64,
         effects = {},  -- filled in data-final-fixes with baseline recipes
         prerequisites = { gprefix .. "replication-" .. def.tier },
-        unit = make_research_unit(def.count, { def.pack }, 30),
+        unit = make_research_unit(def.count, packs, 30),
         order = "a-r-m-" .. def.tier
+    })
+end
+
+-- v4.4.0 (Part A): Dark-matter duplication research (tiers 3/4/5).
+-- Each tier grants `change-recipe-productivity` to the chemical-fuel
+-- replication recipes (every target whose fuel_value <= 100 MJ) and to the
+-- collider's `dmrsa-dark-matter` recipe. The fuel replication recipes also
+-- carry `allow_productivity = true` — the mod's SINGLE deliberate exception
+-- to the "no productivity on replication" rule.
+--
+-- The effects live in data-final-fixes (lib/mirror-generator.lua §8): only
+-- there are the exact generated recipe names known, and only there is
+-- `dmrsa-dark-matter` guaranteed to exist. Declared here as empty nodes so the
+-- mirror generator can fill them.
+--
+-- Levels (plan §1): t3 +100 % / t4 +200 % / t5 +300 % output.
+-- v4.4.0 FIX: `change-recipe-productivity` ACCUMULATES across techs, so every
+-- tech emits change = 1.0 (NOT tier-2 = 1/2/3, which summed to +600 % = 7
+-- items/cycle). The cumulative totals are therefore +100 % (2 items/cycle),
+-- +200 % (3) and +300 % (4) — the intended 3.5x printer at tier 5.
+local duplication_packs = { t3_packs, t4_packs, t5_packs }
+local duplication_counts = { 300, 400, 500 }
+for i, dup_tier in ipairs({ 3, 4, 5 }) do
+    table.insert(tech_list, {
+        type = "technology",
+        name = gprefix .. "duplication-" .. dup_tier,
+        -- v4.2 FIX (pitfall): numeric parameters in prototype localised strings
+        -- crash the data stage — the tier goes in as a string.
+        localised_name = { "technology-name.dmrsa-duplication-tech", tostring(dup_tier) },
+        localised_description = { "technology-description.dmrsa-duplication-tech", tostring(dup_tier) },
+        icons = {
+            {
+                icon = "__dark-matter-replicators-reborn__/graphics/icons/tenemut.png",
+                tint = { r = 0.35, g = 0.10, b = 0.55, a = 1.0 }
+            }
+        },
+        icon_size = 64,
+        effects = {},  -- filled in data-final-fixes with change-recipe-productivity
+        prerequisites = { gprefix .. "replication-" .. dup_tier },
+        unit = make_research_unit(duplication_counts[i], duplication_packs[i], 45),
+        order = "a-r-d-" .. dup_tier
     })
 end
 

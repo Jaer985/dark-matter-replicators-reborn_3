@@ -1,11 +1,11 @@
 {
   "name": "dark-matter-replicators-reborn",
-  "version": "4.2.0",
+  "version": "4.5.0",
   "factorio_version": "2.1",
   "title": "Dark Matter Replicators Reborn",
   "author": "Honktown, Nihilistzsche, Jaer985",
   "homepage": "https://github.com/Jaer985/dark-matter-replicators-reborn_3",
-  "description": "Adds replicators that produce items using electricity. Features dynamic recipe generation, specialized planetary replicators, individual technology research trees for every item with layered custom border graphics, and customizable balancing calculations. Fully optimized for high UPS.",
+  "description": "Replicators that produce almost any item from electricity, with dynamic recipe generation that works with any modlist. Five replicator tiers plus planetary variants for Space Age, quality support, and customizable balancing. Tenemut ore can come from a Dark Matter Synthesizer instead of the map. The Accelerator Ring turns tenemut into dark matter, the densest fuel in the game; the Annihilation Chamber burns it back into heat and the Annihilation Coil burns it straight into electricity. Optimized for high UPS.",
   "dependencies": [
     "base",
     "? space-age",

@@ -27,6 +27,38 @@ local module_slots_addend = helpers.get_startup_setting("replstats-modules-adden
 -- replstats-energy-base / replstats-energy-factor settings are legacy.
 local PER_TIER_MW = { [1] = 1, [2] = 3, [3] = 8, [4] = 15, [5] = 30 }
 
+-- ── v4.4.0 (B3): the 'Normal only' quality gate ───────────────────────────────
+-- The gate used to be applied by writing `recipe.quality = "normal"` on every
+-- generated replication recipe (lib/mirror-generator.lua), a recipe property
+-- that does not gate anything: what the engine really evaluates is the
+-- MACHINE's `allowed_effects`. With the setting on 'Normal only' the machines
+-- therefore must not offer the `quality` effect (no quality module fits the
+-- slots, and an effects beacon can't grant it either); 'Allow quality' offers it.
+local QUALITY_ALLOWED =
+    helpers.get_startup_setting("dmrsa-replicator-quality", "Normal only") == "Allow quality"
+
+local function replicator_allowed_effects()
+    -- v4.4.0 (C3): "consumption" REMOVED. An efficiency module/beacon cuts the
+    -- machine's draw without changing the ledger the balance is defined on
+    -- (replication MJ per recipe at 1/3/8/15/30 MW), so a build can cross the
+    -- deliberate 0.50x floor of the dark-matter loop into positive territory.
+    -- "speed" stays (it draws proportionally more, energy per craft unchanged),
+    -- "pollution" stays (cosmetic), "quality" is the B3 gate above.
+    local effects = { "speed", "pollution" }
+    if QUALITY_ALLOWED then
+        table.insert(effects, "quality")
+    end
+    return effects
+end
+
+-- ── v4.4.0 (D1/G3): the vertical sprite shift ─────────────────────────────────
+-- The 95x85 solid art sits in a 113x91 frame, centred within 1 px vertically and
+-- 7 px biased to the left. `entity_corner * 0.1` therefore pushed every
+-- replicator 0.08 tiles SOUTH of its grid box (leaving the visible gap at the
+-- north edge); the art-calibrated value is `entity_corner * 0.02`. The X term
+-- (0.4/3) cancels the 7 px bias and is unchanged.
+local SHIFT_Y_FACTOR = 0.02
+
 -- We will generate 5 tiers of Replicators
 for tier = 1, 5 do
     -- Calculations for stats
@@ -132,7 +164,7 @@ for tier = 1, 5 do
                 line_length = 11,
                 animation_speed = 1 / 3,
                 scale = entity_corner * 2 / 3,
-                shift = { entity_corner * 0.4 / 3, entity_corner * 0.1 }
+                shift = { entity_corner * 0.4 / 3, entity_corner * SHIFT_Y_FACTOR }
             },
             -- v3.6.0: idle animation shows the replicator DIMMED when it has no
             -- recipe/input, so it visibly "turns off" instead of looking like
@@ -154,7 +186,7 @@ for tier = 1, 5 do
                 -- satisfying the > 0 constraint.
                 animation_speed = 0.01,
                 scale = entity_corner * 2 / 3,
-                shift = { entity_corner * 0.4 / 3, entity_corner * 0.1 },
+                shift = { entity_corner * 0.4 / 3, entity_corner * SHIFT_Y_FACTOR },
                 tint = { r = 0.55, g = 0.55, b = 0.55, a = 0.9 }
             }
         },
@@ -170,11 +202,13 @@ for tier = 1, 5 do
         },
         
         module_slots = module_slots,
-        -- v4.2 refino (original-mod study): allowed_effects sin "productivity" — con
-                -- recipes de 0 ingredientes la productividad es duplicación GRATIS
-                -- (el exploit existe en el original; lo corregimos). La calidad sale
-                -- por el Refinador (sin modules, probabilidad = balance).
-                allowed_effects = { "consumption", "speed", "quality", "pollution" },
+        -- v4.2 refino (original-mod study): allowed_effects sin "productivity" —
+                -- con recipes de 0 ingredientes la productividad es duplicación
+                -- GRATIS (el exploit existe en el original; lo corregimos).
+                -- v4.4.0 (B3/C3): the quality gate and the removed "consumption"
+                -- effect live in replicator_allowed_effects() at the top of this
+                -- file — one place, both tiers of machine.
+                allowed_effects = replicator_allowed_effects(),
     }
 
     -- Space platform and Space Exploration compatibility
@@ -205,6 +239,13 @@ for tier = 1, 5 do
 end
 
 -- 6. Replication Lab Entity
+-- v4.4.0 (D1/G4): the lab's sprite geometry, stated instead of implied — the
+-- selection box is 3x3 (half 1.5), so the art-calibrated rule gives
+-- scale 1.0 and shift {0.2, 0.03} (see the SHIFT_Y_FACTOR note above).
+local LAB_SELECTION = 1.5
+local LAB_SCALE = LAB_SELECTION * 2 / 3
+local LAB_SHIFT = { LAB_SELECTION * 0.4 / 3, LAB_SELECTION * SHIFT_Y_FACTOR }
+
 data:extend({
     {
         type = "item",
@@ -229,6 +270,11 @@ data:extend({
         collision_box = { { -1.2, -1.2 }, { 1.2, 1.2 } },
         selection_box = { { -1.5, -1.5 }, { 1.5, 1.5 } },
         light = { intensity = 0.75, size = 8 },
+        -- v4.4.0 (D1/G4): the lab is a 3x3 building: the mod's art-calibrated
+        -- rule is scale = selection_half * 2/3 = 1.5 * 2/3 = 1.0 (what the
+        -- missing `scale` key defaulted to — the 3.53-tile figure in the audit
+        -- is the FRAME width, the solid art is 95 px = 2.97 tiles) and
+        -- shift = { 1.5*0.4/3 = 0.2, 1.5*0.02 = 0.03 } instead of {0.2, 0.15}.
         on_animation = {
             filename = "__dark-matter-replicators-reborn__/graphics/entity/replication-lab.png",
             width = 113,
@@ -236,14 +282,16 @@ data:extend({
             frame_count = 33,
             line_length = 11,
             animation_speed = 1 / 3,
-            shift = { 0.2, 0.15 }
+            scale = LAB_SCALE,
+            shift = LAB_SHIFT
         },
         off_animation = {
             filename = "__dark-matter-replicators-reborn__/graphics/entity/replication-lab.png",
             width = 113,
             height = 91,
             frame_count = 1,
-            shift = { 0.2, 0.15 }
+            scale = LAB_SCALE,
+            shift = LAB_SHIFT
         },
         working_sound = {
             sound = {

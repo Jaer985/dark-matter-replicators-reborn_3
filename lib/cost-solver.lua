@@ -211,6 +211,32 @@ local MOD_ORE_TIERS = {
     { pattern = "condensates",      tier = 3 },
     { pattern = "rpg_",             tier = 3 },   -- RPG system potions (no tech)
     { pattern = "nitric%-acid",     tier = 3 },   -- mid-game acid (no same-mod tech)
+    -- v4.2.x (2026-08-23, consumibles audit): items with NO producing recipe
+    -- that fell to the tier-1/2 baseline. Tiers reflect their real
+    -- progression position (see research/nosotros-fix-specs.md §3).
+    { pattern = "depleted%-.*fuel%-cell$", tier = 3 },  -- spent nuclear fuel ×4 (reprocessing is t3)
+    { pattern = "mushell%-seed",    tier = 4 },   -- Gleba-family seed (agriculture L4)
+    { pattern = "fossil%-larvae",   tier = 4 },   -- apiculture byproduct (L4)
+    { pattern = "fission%-construction%-robot", tier = 3 },  -- construction infra, no producing recipe in dump
+    -- v4.2.2 (A2 commit-2, sim-a2-rescale.md §2.6 — 24 items dump-confirmed,
+    -- families reach 73): material families degraded to t1 by chain collapse
+    -- (zero-ingredient/cycle terminators). Floors only RAISE.
+    { pattern = "angels%-ingot",    tier = 2 },   -- ingot-copper/iron t1→2; silver/tin 2; alu..zinc 3; chrome/gold/titanium 4; platinum 5
+    { pattern = "angels%-powder",   tier = 2 },   -- powder-copper/iron t1→2 (mixers are machines, no-op)
+    { pattern = "angels%-roll",     tier = 2 },   -- roll-copper/iron/steel t1→2; tin 2; alu/silver 3; gold/titanium 4
+    { pattern = "angels%-wire%-coil", tier = 2 }, -- wire-coil-copper t1→2
+    { pattern = "angels%-geode",    tier = 3 },   -- geode-* all t2→3 (mid-game refining byproducts)
+    { pattern = "angels%-crystal%-dust", tier = 3 },
+    { pattern = "angels%-catalyst%-metal", tier = 3 }, -- green t1/carrier t2/blue..yellow 3 → ≥3 (lottery unifier)
+    { pattern = "angels%-liquid%-ferric%-chloride%-solution", tier = 3 },
+    { pattern = "angels%-liquid%-cupric%-chloride%-solution", tier = 3 },
+    { pattern = "angels%-liquid%-molten", tier = 4 }, -- 9 vulcanus fluids (unfloored)
+    { pattern = "spaceship%-scrap", tier = 3 },   -- space material, zero-ing fallback t1→3
+    { pattern = "planetaris%-magnesium%-dust", tier = 2 }, -- documents current state (no-op)
+    { pattern = "auric%-asteroid%-chunk", tier = 5 },  -- solver-side floor (mirror SPACE_CHUNKS already t5)
+    { pattern = "bismuth%-asteroid%-chunk", tier = 5 }, -- bismuth t5@39s — closes the chain-tier leak
+    { pattern = "bob%-wooden%-board", tier = 2 },  -- t1-resolved degradation
+    { pattern = "coal%-crushed",   tier = 2 },     -- t1-resolved degradation
 }
 
 -- v4.2: universal ore-tier override. MOD_ORE_TIERS used to apply ONLY in the
@@ -323,12 +349,21 @@ function CostSolver.build_recipe_map()
     if not data or not data.raw or not data.raw.recipe then return end
 
     for name, recipe in pairs(data.raw.recipe) do
-        -- EXCLUDE recycling, unbarreling, and cyclic byproduct recipes to prevent massive cost infinite loops
+        -- EXCLUDE recycling, unbarreling, cyclic byproduct, and DMR's OWN
+        -- recipes to prevent massive cost infinite loops.
         local is_valid_recipe = true
         if recipe_has_category(recipe, "recycling") or string.find(name, "%-recycling$") then
             is_valid_recipe = false
         end
         if recipe_has_category(recipe, "barreling") or string.find(name, "empty%-") or string.find(name, "%-unbarrel") then
+            is_valid_recipe = false
+        end
+        -- v4.2.2 (A2 commit-2, sim §2.6): DMR's own dmrsa-repl-*/refine-*
+        -- recipes are zero-ingredient (cost = energy_required), so letting
+        -- them into the map makes branch 7 (zero-ingredient) treat them as
+        -- legit chain terminators for mod items (angels-thermal-water read
+        -- dm 1.5). Same exclusion class as -recycling$.
+        if string.find(name, "^dmrsa%-") then
             is_valid_recipe = false
         end
 
@@ -553,13 +588,23 @@ function CostSolver.solve_cost(name, visited, is_root, depth)
         -- unlock tech if available (Space Age items without recipes like
         -- promethium asteroid chunks or planet-specific materials would
         -- otherwise pollute low-tier grouped techs).
+        --
+        -- v4.2.2 (A2 commit-2, sim §2.3): orphans no longer get a flat
+        -- dm=10.0 — dm and time derive from their TIER (1.5×t^1.5, the
+        -- ore-floor formula): an endgame orphan (tenemut, spaceship-scrap)
+        -- stops costing the same as a t2 one. Tier from unlock tech → SCL
+        -- fallback, floor by MOD_ORE_TIERS as before.
         visited[name] = nil
         local unknown_tier = 2
         local unknown_tech = recipe_tech_map[name]
         if unknown_tech then
             unknown_tier = CostSolver.get_tier_from_tech(unknown_tech)
         end
-        local fallback = { dark_matter = 10.0, time = 3.0, tier = unknown_tier }
+        local fallback = {
+            dark_matter = 1.5 * (unknown_tier ^ 1.5),
+            time = 3.0 * unknown_tier / 2,
+            tier = unknown_tier,
+        }
         local ore_override = get_ore_tier_override(name)
         if ore_override and ore_override > fallback.tier then
             fallback.tier = ore_override
@@ -711,7 +756,15 @@ function CostSolver.solve_cost(name, visited, is_root, depth)
         -- entirely when ingredients resolved to tier 1. This is the trade-off
         -- that fixes "Replication: Components (Tier 1) contains too much stuff"
         -- from the mod portal report (Bob's items pinned at tier 1 by cycles).
-        if max_tier > ingredient_tier + 1 and ingredient_tier > 1 then
+        --
+        -- v4.2.2 (A2 commit-2, sim-a2-rescale.md §2.5): the bypass is EXACTLY
+        -- the degradation mechanism — cycle/zero-ingredient collapses resolve
+        -- ingredient_tier to 1, so the cap never applied and collapsed chains
+        -- absorbed the unlock tech's full tier (861/1602 tier flips in the
+        -- sim without the companion guard). With the dmrsa-* map guard below
+        -- the collapse class shrinks; the cap now applies UNCONDITIONALLY
+        -- (test run_tests "mid-item cap" asserts the new deliberate value).
+        if max_tier > ingredient_tier + 1 then
             max_tier = ingredient_tier + 1
         end
     end

@@ -193,9 +193,12 @@ end
 -- items (spawn/drop-only internals, hidden mod internals) — replicating them
 -- is a shortcut the game never intended, so they must not generate research.
 local ELIGIBILITY_WHITELIST = {
-    -- Space Age asteroid chunks (mined from space, no recipe)
+    -- Space Age asteroid chunks (mined from space, no recipe).
+    -- v4.2.2 (D17): all 6 real chunks — auric/bismuth added (they were
+    -- escaping eligibility and only reachable via steam-recycler swallow).
+    -- Same source list as SPACE_CHUNK_TARGETS below (sync both).
     "metallic-asteroid-chunk", "carbonic-asteroid-chunk", "oxide-asteroid-chunk",
-    "promethium-asteroid-chunk",
+    "auric-asteroid-chunk", "bismuth-asteroid-chunk", "promethium-asteroid-chunk",
     -- Bob's alien artifacts (enemy drops, game-intended collectible)
     "bob-alien-artifact", "bob-alien-artifact-blue", "bob-alien-artifact-green",
     "bob-alien-artifact-orange", "bob-alien-artifact-purple", "bob-alien-artifact-red",
@@ -269,6 +272,47 @@ for _, n in ipairs({
 }) do
     BOB_GEM_ORES[n] = true
 end
+-- v4.2.2 (D17, decisión del usuario 2026-09-04): the 6 real asteroid chunks.
+-- They are flag-hidden in Space Age but ARE legit replication targets (the
+-- only source of chunk material without asteroid reprocessing chains). Their
+-- GATE (tier 5 + gravity<=0) lives in mirror-generator's SPACE_CHUNKS — this
+-- set only keeps them past the hidden-item filter here. Mirrors the
+-- mirror-generator list: keep both in sync.
+local SPACE_CHUNK_TARGETS = {}
+for _, n in ipairs({
+    "metallic-asteroid-chunk", "carbonic-asteroid-chunk",
+    "oxide-asteroid-chunk", "auric-asteroid-chunk",
+    "bismuth-asteroid-chunk", "promethium-asteroid-chunk",
+}) do
+    SPACE_CHUNK_TARGETS[n] = true
+end
+-- v4.2.2 (batch-3 audit): hoisted out of is_v4_excluded — these tables were
+-- rebuilt on every call (per-item re-allocation). Pure lookup tables.
+local YUOKI_SIGNS = {
+    "y_greensign", "y_rwtechsign", "ypfw_trader_sign", "ye_science_blue"
+}
+local YUOKI_EXCLUDED = {
+    -- Inserters
+    "y-inserter-s4", "y-inserter-smart-long", "y-inserter-smart",
+    "y_inserter_diagonal", "y_inserter_evade_shortL", "y_inserter_evade_shortR",
+    "y_inserter_smart_LL", "y_inserter_smart_RR",
+    "y_inserter_smart_leftR2", "y_inserter_smart_rightR2",
+    -- Storage
+    "y-rare-m1bunker-log",
+    -- Basements
+    "y_basement_4x4a", "y_basement_5x5a", "y_basement_5x5b", "y_basement_5x5c",
+    "y_basement_5x5d", "y_basement_5x5e", "y_basement_5x5f", "y_basement_5x5f2",
+}
+local YUOKI_EXCLUDED_SET = {}
+for _, s in ipairs(YUOKI_EXCLUDED) do YUOKI_EXCLUDED_SET[s] = true end
+local V42_EXCLUDED = {
+    -- (las minas/cápsulas/robots de combate se REVIERTEN: el usuario decide
+    -- que se replican en su tier; se quitan de esta lista en 2026-08-22)
+    "factory-circuit-connector",
+    "bob-spidertron-cannon",
+}
+local V42_EXCLUDED_SET = {}
+for _, s in ipairs(V42_EXCLUDED) do V42_EXCLUDED_SET[s] = true end
 local function is_v4_excluded(name, type_name)
     -- 1. Weapons (gun) and armor
     if type_name == "gun" or type_name == "armor" then
@@ -309,9 +353,6 @@ local function is_v4_excluded(name, type_name)
     -- 7. Yuoki Industries faction signs (v4.0): signs represent what other
     -- factions are willing to do for you — faction currency, not production.
     -- Upstream DMR explicitly set their replication cost to 0.
-    local YUOKI_SIGNS = {
-        "y_greensign", "y_rwtechsign", "ypfw_trader_sign", "ye_science_blue"
-    }
     for _, s in ipairs(YUOKI_SIGNS) do
         if name == s then return true end
     end
@@ -320,34 +361,41 @@ local function is_v4_excluded(name, type_name)
     --   - Bunker storage: storage buildings, not production
     --   - Basements: factorio-style buildings (one per base placement)
     --   (Pendiente: procesado/refinado/mastercrafted/ultimate decidir poco a poco)
-    local YUOKI_EXCLUDED = {
-        -- Inserters
-        "y-inserter-s4", "y-inserter-smart-long", "y-inserter-smart",
-        "y_inserter_diagonal", "y_inserter_evade_shortL", "y_inserter_evade_shortR",
-        "y_inserter_smart_LL", "y_inserter_smart_RR",
-        "y_inserter_smart_leftR2", "y_inserter_smart_rightR2",
-        -- Storage
-        "y-rare-m1bunker-log",
-        -- Basements
-        "y_basement_4x4a", "y_basement_5x5a", "y_basement_5x5b", "y_basement_5x5c",
-        "y_basement_5x5d", "y_basement_5x5e", "y_basement_5x5f", "y_basement_5x5f2",
-    }
-    for _, s in ipairs(YUOKI_EXCLUDED) do
-        if name == s then return true end
-    end
+    if YUOKI_EXCLUDED_SET[name] then return true end
     -- v4.2 (dump audit 2026-08-22): Bob's combat robots are type "item"
     -- (vanilla uses capsules, which the capsule rule catches), so they slipped
     -- past the combat-capsule exclusion. Also the factorissimo network
     -- connector (red-wire utility, not a production item) and the spidertron
     -- cannon (a weapon).
-    local V42_EXCLUDED = {
-        -- (las minas/cápsulas/robots de combate se REVIERTEN: el usuario decide
-        -- que se replican en su tier; se quitan de esta lista en 2026-08-22)
-        "factory-circuit-connector",
-        "bob-spidertron-cannon",
-    }
-    for _, s in ipairs(V42_EXCLUDED) do
-        if name == s then return true end
+    if V42_EXCLUDED_SET[name] then return true end
+    -- 9. v4.2.x: Angel's vehicle equipment uses the "-vequip" suffix, which
+    -- escapes both the bob-vehicle-* prefix rule and the %-equipment$ rule,
+    -- and its items are type "item" with place_as_equipment_result (no
+    -- entity in data.raw.car/... so the vehicle-registry rule misses too).
+    -- Vehicle equipment is excluded like every other vehicle/personal gear
+    -- (user decision 2026-08-23; dump: exactly 5 items + 1 hidden variant).
+    if string.find(name, "%-vequip$") then
+        return true
+    end
+    -- 10. v4.2.x: RPG-system potions are drop-only progression items with no
+    -- production chain — replication would bypass their intended scarcity
+    -- (user decision 2026-08-23; not mass-use ammo/capsules).
+    if string.find(name, "^rpg_.*_potion$") then
+        return true
+    end
+    -- 11. v4.2.2 (batch-3 audit): structural equipment guard. Gear whose item
+    -- name escapes ALL name patterns was still replicating: aircraft-
+    -- afterburner (movement), aircraft-energy-shield, angels-cab-energy-
+    -- interface-mk1, manual-color-module — none contains "-equipment", so
+    -- rules 4/5 miss them even though Factorio marks them as worn equipment
+    -- via place_as_equipment_result. Inspect the prototype instead of the
+    -- name. Solar/battery stays KEPT (mass-use, same exception as rule 5).
+    local proto = data.raw[type_name] and data.raw[type_name][name]
+    if proto and proto.place_as_equipment_result then
+        if string.find(name, "solar") or string.find(name, "battery") then
+            return false
+        end
+        return true
     end
     return false
 end
@@ -358,7 +406,11 @@ function TargetMapper.get_potential_replication_targets()
     local item_categories = {
         "item", "ammo", "armor", "gun", "capsule", "tool", "module",
         "item-with-entity-data", "item-with-tags", "spidertron-remote",
-        "space-platform-starter"
+        -- v4.4.0 (B13): the real Space Age registry is
+        -- `space-platform-starter-pack`; the old `space-platform-starter`
+        -- literal matches no prototype type, so the starter pack was never a
+        -- replication target.
+        "space-platform-starter-pack"
     }
 
     -- 1. Safely iterate over each item category in data.raw
@@ -432,9 +484,12 @@ function TargetMapper.get_potential_replication_targets()
                     is_valid = false
                 end
 
-                -- Filter out hidden items (whitelist specific asteroid chunks)
+                -- Filter out hidden items (whitelist: orbital chunks — they
+                -- are flag-hidden in SA but ARE legit replication targets;
+                -- v4.2.2 D17: single source of truth with mirror-generator's
+                -- SPACE_CHUNKS set: the 6 real chunks stay target-eligible).
                 if is_valid and (item.hidden or (item.flags and has_flag(item.flags, "hidden"))) then
-                    if name ~= "metallic-asteroid-chunk" and name ~= "carbonic-asteroid-chunk" and name ~= "oxide-asteroid-chunk" then
+                    if not SPACE_CHUNK_TARGETS[name] then
                         is_valid = false
                     end
                 end

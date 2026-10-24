@@ -1,14 +1,23 @@
 # DMR — Roadmap
 
 _Estado del fork: Post 3.0 (Jaer985) — Base: Factorio 2.1 (solo 2.1 desde v4.0)_
-_Última versión publicada: 4.2.0 (2026-08-23) — Quality Refiner (4.1.0) + rebalance B1/B2 + fixes del gate test en modlist real de 138 mods_
-_En desarrollo: v4.2.0 (2026-08-22) — baseline inflado (Fix 1-3) + B1 (techs espejo por nivel) + B2 (rebalance de costos completo + refino original) + B3/B4/B5 + Quality Refiner (4.1). Pendiente gate test → publicación._
+_Última publicada en portal: 4.3.1 (2026-10-17). 4.2.1 se construyó y pasó gate test pero no se subió (saltada). En desarrollo: v4.4.0 (timing model v3 + bucle de energía de materia oscura) — pendiente de gate test; `info.json` sigue en 4.3.1._
+_En desarrollo (v4.4.0): timing model v3 (`lib/timing-model.lua`), bucle de energía de materia oscura (Anillo acelerador + Cámara de aniquilación) e investigación de duplicación de combustible. Plan: `research/plan-v440-timing-and-darkmatter.md`._
 
 > El antiguo `roadmap.txt` del upstream (nihilistzsche / Honktown) está congelado en la era 0.17/0.18 y ya no aplica. Este documento es la fuente viva de planes para el fork moderno.
 
 ---
 
 ## ✅ Cerrado recientemente
+
+- **v4.3.0** (2026-10-16) — Modo sin mineral + sintetizador de materia oscura (petición del portal, hilo de evil_star)
+  - Nuevo ajuste `dmrsa-tenemut-source` (3 modos): Ore patches (default, sin cambios) / Ore patches + synthesis / Synthesis only. El último quita el tenemut del worldgen por completo: sin autoplace spec, sin autoplace-control, sin inyección en los planetas (data-updates bloques 1+2).
+  - Nueva máquina **Dark Matter Synthesizer** (`prototypes/entities/synthesizer.lua`): 1 MW, 4 s por tenemut, `ingredients = {}` (solo electricidad), categoría propia `dmrsa-synthesis`, receta de construcción propia. Tech nueva `dmrsa-tenemut-synthesis` en `technologies.lua` (prereq `electronics`, solo automation science → sin candado circular: no se necesita tenemut para investigar lo que produce tenemut).
+  - Nuevo ajuste `dmrsa-tenemut-research-required` (default ON): al desactivarlo los techs de replicación usan los packs vanilla de su tier en lugar del pack DMR — `make_research_unit` + ambos `add_research_pack` + red de seguridad contra listas de ingredientes vacías (bug "sin coste" de v4.2) + fallback por tier para los techs de materiales.
+  - Guardas anti-exploit: `hide_from_player_crafting = true` (una receta sin ingredientes craftable a mano = items infinitos gratis), `allow_productivity = false`, máquina con 0 slot de módulos y `allowed_effects = { "consumption" }` (también bloquea beacons): la electricidad ES el coste.
+  - El prototipo `resource` se MANTIENE en todos los modos por compatibilidad de saves (las partidas ya generadas conservan sus parches y siguen cargando); el ajuste solo cambia lo que genera un mapa NUEVO.
+  - Tests: `dmr-tests/test_tenemut_source.lua` 48 checks + test_mirror 82 + test_cost_bands 257 + run_tests 54 + test_refiner 48 + test_planet_routing 14 + test_step_filter PASS. Zip `dark-matter-replicators-reborn_4.3.0.zip` (builder `research/build_430.py`). Gate test pendiente (usuario, PC de juego).
+  - Nota para la idea futura del reactor "dark energy" (`research/futures-dark-energy.md`): con el sintetizador ya no hace falta el parche de ore para alimentar la cadena scoop → dark matter → reactor; el diseño debe apoyarse en él (y decidir si el scoop sigue siendo item de research o pasa a máquina extractora).
 
 - **v3.6.4** (2026-08-11) — Eligibility rule + auto-hide categories
   - target-mapper: items only replicable if produced by recipe OR minable OR whitelisted. Phantom/spawn-only items (no recipe, not minable) no longer generate junk research — covers mod internals (factorissimo factory-*) and future mods without per-mod lists.
@@ -248,7 +257,7 @@ Objetivo: que DMR siga balanceado con cualquier modlist de overhaul (Bob's/Angel
 - [ ] **Replicación de Darkstar Utilities** — ❌ NO ENCONTRADO (2026-08-22): sin resultados en el portal ni GitHub con "darkstar"/"DarkstarUtilities"; item heredado del roadmap upstream 0.17/0.18. Eliminable cuando se audite el futuro.
 - [ ] **Cost calculator por crafting difficulty** — actualmente solo `normal`; ofrecer `expensive` con multiplicadores
 - [ ] **Scenario standalone sin ores** (item upstream 0.8.1) — start con grid, replicators y techs; útil para testing rápido
-- [ ] **Reactor chain "dark energy"** (posible mod separado, IDEA REVISADA 2026-08-22 — diseño en `research/futures-dark-energy.md`, NO implementar sin pedir): 5 reactores que queman `dmrsa-dark-matter` (item HOY HUÉRFANO — nada lo produce ni consume) y generan la energía de la replicación (1/3/8/15/30 MW espejo de los replicadores, 1 reactor = 1 replicador del mismo tier). El scoop pasaría de item de research a MÁQUINA extractora (tenemut → dark matter). Reactores replicables (consistente con el refino original). Estructura a decidir cuando se retome: mod separado vs feature integrada; potencia 1:1 vs 2x excedente; extracción por scoop-máquina vs recipe base.
+- [x] **Bucle de energía de materia oscura (IMPLEMENTADO v4.4.0)** — el item `dmrsa-dark-matter` ya no está huérfano: lo produce el **Anillo acelerador** (250 MW × 200 s = 50 GJ por unidad, 25 tenemut + 1 conducto de nanofase) y lo consume la **Cámara de aniquilación** (`type = "reactor"`, 41,6667 MW de calor durante 600 s por unidad, calor → intercambiadores y turbinas vanilla; sin bonificación de vecinos porque la materia metaestable se aniquila consigo misma). Investigación de duplicación (`dmrsa-duplication-3/4/5`) con `change-recipe-productivity`: +100 %/+200 %/+300 % → el anillo pasa de 0,50× a 2,00×. Decisión pendiente (ya no bloqueante): si el scoop pasa de item de research a máquina extractora.
 
 ---
 
@@ -257,16 +266,16 @@ Objetivo: que DMR siga balanceado con cualquier modlist de overhaul (Bob's/Angel
 - [x] **Suite de tests de cost-solver** — DMRL: `dmr-tests/` (fuera del source dir, no se empaqueta). Harness mockea `data.raw`/`settings`, carga los módulos reales de lib/, fixtures cubren los bugs de tier v3.5.9-3.5.19. Correr: `cd dmr-tests && lua5.2 run_tests.lua`. Factorio usa Lua 5.2 (goto en cost-solver).
 - [ ] **Ampliar fixtures** — añadir casos SA reales (foundry metallurgy, holmium, tungsten) y mods (Bob's cycles con tech)
 - [ ] **Documentar el patrón de orphan techs** — el `planet_match` de PASS 3 es un patrón nuevo que debería estar en una nota para futuros mantenedores
-- [ ] **Refactor `data-final-fixes.lua`** — 3 PASS, 161 líneas; valdría separar en archivos por concern (orphans, lab inputs, grouped techs)
+- [ ] **Refactor `data-final-fixes.lua`** — 5 PASS en `prototypes/fixes/` (generate, prereqs, orphans, lab-inputs, empty-categories)
 - [ ] **Audit de `repltypes.lua` y `target-mapper.lua`** — `_2` eliminado en changelog, pero el gprefix replacement merece una pasada para asegurar consistencia
-- [ ] **Localization ES-ES** — sync con cambios de 3.5.0 (14 categorías nuevas)
+- [x] **Localization ES-ES** — al día (paridad de claves EN/ES verificada 2026-10-19; sin claves muertas, sin CRLF)
 
 ---
 
 ## 📋 Procedimiento de release (pipeline real 2026-08, ver skill dmr-github-publishing)
 
 1. Gate test en juego (Factorio 2.1, modlist real) → vaciar errores del log
-2. Bump `info.json` version + entrada ACUMULADA en `changelog.txt` (todo lo no publicado desde la última versión del portal — 4.0.0)
+2. Bump `info.json` version + entrada ACUMULADA en `changelog.txt` (todo lo no publicado desde la última versión del portal — consultar la API, hoy 4.3.1)
 3. Build zip con la convención (`dark-matter-replicators-reborn_X.Y.Z.zip`) + `check-no-private-data.py` (privacy CLEAN)
 4. Docs en una pasada: `mod-portal-description.md` actualizado (settings defaults, balance B2, features)
 5. GitHub push: clonar → sync → push (el source dir NO es repo git; el token de GitHub para Jaer985 vive en el `.env` del perfil Hermes — ver skill dmr-github-publishing)

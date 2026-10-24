@@ -62,6 +62,19 @@ for _, cat in ipairs(category_subgroups) do
 end
 
 data:extend({
+    -- ── v4.4.0 (C2): the private fuel category ────────────────────────────────
+    -- Dark matter shipped as `fuel_categories = { "nuclear" }`, so a VANILLA
+    -- nuclear reactor could burn it — and a 2x2 block burned it with the
+    -- reactor's 1.5-1.75x neighbour bonus, turning the collider's declared
+    -- 0.50x floor (250 MW x 200 s = 50 GJ in, 25 GJ out) into a 0.75-0.875x
+    -- return with no research at all. The item now carries a category that only
+    -- the Annihilation Chamber accepts (`dmrsa-dark-matter-fuel`), so the floor
+    -- is the floor. fuel_value stays 25 GJ: the energy ledger did not change,
+    -- only WHO may burn it.
+    {
+        type = "fuel-category",
+        name = gprefix .. "dark-matter-fuel"
+    },
     -- Tenemut (raw material, tool). Defined HERE (items file, loaded FIRST by
     -- data.lua) — v4.2 fix (gate-test dump 2026-08-23): it previously lived in
     -- prototypes/raw-resources.lua which loads AFTER technologies.lua, so
@@ -81,6 +94,20 @@ data:extend({
     },
 
     -- Pure Dark Matter (High-stack universal input item)
+    -- v4.4.0 (Part B): it is now the carrier of the power loop — a fuel.
+    --   fuel_value / fuel_categories make it burnable through the mod's OWN
+    --   category (v4.4.0 C2: `dmrsa-dark-matter-fuel`, declared right above —
+    --   the vanilla reactor's `nuclear` category is deliberately NOT used, so
+    --   the 1.5-1.75x neighbour bonus of a reactor block cannot be stacked on
+    --   top of the collider ledger). The Annihilation Chamber
+    --   (prototypes/entities/annihilator.lua) is tuned around the value:
+    --   one unit = 25 GJ = 25 000 MJ -> 600 s of heat at 41.6667 MW.
+    --   It stays hidden (hidden = true) so it never appears in the item browser.
+    --   NOTE (engine, Factorio 2.1.20): the singular `fuel_category` was REMOVED —
+    --   the field is `fuel_categories` (array). Proven by the load error
+    --   "ItemPrototype::fuel_category was removed. Please use
+    --   ItemPrototype::fuel_categories." and by base's nuclear-fuel
+    --   (base/prototypes/item.lua: fuel_categories = {"nuclear"}).
     {
         type = "item",
         name = gprefix .. "dark-matter",
@@ -96,7 +123,14 @@ data:extend({
         icon_size = 64,
         subgroup = "raw-resource", -- Raw resource is placed under vanilla raw resources to keep it in the natural ore group
         order = "z",
-        stack_size = 1000
+        stack_size = 1000,
+        fuel_value = "25GJ",
+        -- v4.4.0 (C2): PRIVATE category — a vanilla reactor/boiler/generator
+        -- accepts `nuclear`/`chemical`, never this one. Only the Annihilation
+        -- Chamber (prototypes/entities/annihilator.lua) lists it.
+        fuel_categories = { gprefix .. "dark-matter-fuel" },
+        -- Purple glow while burning (shown on the Annihilation Chamber's light).
+        fuel_glow_color = {r = 0.45, g = 0.15, b = 0.7, a = 1.0}
     },
 
     -- Dark Matter Scoop

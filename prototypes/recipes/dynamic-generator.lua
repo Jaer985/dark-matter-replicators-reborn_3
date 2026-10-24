@@ -232,7 +232,13 @@ end
 -- The DMR item is the custom intermediate (tenemut/scoop/transducer/conduit);
 -- science packs are the vanilla/SA packs. The setting only affects display
 -- order in the tech tree — research cost is unchanged.
+-- v4.3: `dmrsa-tenemut-research-required = false` skips the DMR intermediate
+-- entirely; the caller's fallback then gives the tech its vanilla packs so an
+-- ingredient list can never come out empty (the v4.2 "no cost" bug).
 local function add_research_pack(research_packs, pack, is_dmr_item)
+    if is_dmr_item and not helpers.dmr_research_pack_required() then
+        return
+    end
     local order = helpers.get_startup_setting("dmrsa-research-pack-order", "DMR Item First")
     if order == "Science Pack First" and is_dmr_item then
         table.insert(research_packs, 1, pack)
@@ -548,6 +554,14 @@ function DynamicGenerator.generate()
                     add_research_pack(research_packs, { "agricultural-science-pack", 1 }, false)
                 end
 
+                -- v4.3: safety net — with `dmrsa-tenemut-research-required`
+                -- disabled the DMR pack above was skipped, so a tech could end
+                -- up with NO pack at all (the v4.2 "no cost" failure mode).
+                if #research_packs == 0 then
+                    add_research_pack(research_packs, { "automation-science-pack", 1 }, false)
+                    add_research_pack(research_packs, { "logistic-science-pack", 1 }, false)
+                end
+
                 -- Scale research cost based on settings (v3.7.0: single
                 -- difficulty table — cost is absolute, Easy reads player
                 -- settings, harder levels use fixed values)
@@ -807,6 +821,13 @@ function DynamicGenerator.generate()
                     add_research_pack(research_packs, { "electromagnetic-science-pack", 1 }, false)
                 elseif planet_suffix == "gleba" then
                     add_research_pack(research_packs, { "agricultural-science-pack", 1 }, false)
+                end
+
+                -- v4.3: same safety net as the individual-tech path — a tech
+                -- never ships with an empty ingredient list.
+                if #research_packs == 0 then
+                    add_research_pack(research_packs, { "automation-science-pack", 1 }, false)
+                    add_research_pack(research_packs, { "logistic-science-pack", 1 }, false)
                 end
 
                 -- Scale research cost based on settings and number of items

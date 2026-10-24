@@ -14,8 +14,25 @@ end
 safe_require("prototypes.items.dark-matter")
 safe_require("prototypes.entities.replicators")
 safe_require("prototypes.entities.refiner")
+-- v4.3: Dark Matter Synthesizer (ore-free tenemut) — self-gating on the
+-- `dmrsa-tenemut-source` startup setting (returns early in "Ore patches").
+safe_require("prototypes.entities.synthesizer")
+-- v4.4.0 (Part B): the dark-matter power loop — Accelerator Ring + Annihilation
+-- Chamber. Loaded BEFORE the recipes that reference their categories/items, and
+-- before the technologies that unlock them.
+safe_require("prototypes.entities.collider")
+safe_require("prototypes.entities.annihilator")
+-- v4.5.0: the Annihilation Coil — the same dark matter burned straight into
+-- electricity. Loaded right after its sibling chamber and BEFORE
+-- recipes/dark-matter-power.lua, which defines its build recipe.
+safe_require("prototypes.entities.annihilation-coil")
 safe_require("prototypes.recipes.base-recipes")
+safe_require("prototypes.recipes.dark-matter-power")
 safe_require("prototypes.technologies.technologies")
+-- v4.4.0 (Part B): dmrsa-collider-1 + dmrsa-annihilation. AFTER technologies.lua,
+-- because they declare dmrsa-replication-materials-5 as a prerequisite (guard
+-- reads data.raw.technology at load time, load order matters).
+safe_require("prototypes.technologies.dark-matter-power")
 
 -- Load Space Age specialized planetary prototypes
 if mods["space-age"] then

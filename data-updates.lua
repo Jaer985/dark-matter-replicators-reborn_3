@@ -8,8 +8,10 @@ local helpers = require("lib.helpers")
 -- Bob's) and under-tiering 367 items. See data-final-fixes.lua PASS 0.
 
 -- 1. Configure planet autoplace spawning for Tenemut
+-- v4.3: skipped entirely in "Synthesis only" mode — no autoplace spec, no
+-- autoplace-control and no map-gen injection means nothing can spawn.
 local spawning_planet_setting = settings.startup["tenemut-spawning-planet"]
-if spawning_planet_setting and spawning_planet_setting.value then
+if helpers.tenemut_worldgen_enabled() and spawning_planet_setting and spawning_planet_setting.value then
     local default_planet = string.lower(spawning_planet_setting.value)
     if data.raw.planet and data.raw.planet[default_planet] then
         local planet_def = data.raw.planet[default_planet]
@@ -28,7 +30,8 @@ if spawning_planet_setting and spawning_planet_setting.value then
 end
 
 -- 2. Map autoplace for other Space Age planets if configured
-if mods["space-age"] then
+-- v4.3: same worldgen gate as block 1 (synthesis-only places nothing).
+if helpers.tenemut_worldgen_enabled() and mods["space-age"] then
     local other_planets_setting = settings.startup["tenemut-other-planets"]
     if other_planets_setting and other_planets_setting.value ~= "None" then
         local value = other_planets_setting.value
@@ -71,6 +74,14 @@ if mods["space-age"] then
                     table.insert(assembler.surface_conditions, { property = "gravity", min = 0.1 })
                 end
             end
+        end
+
+        -- Enforce gravity for the Dark Matter Synthesizer (v4.3) — same rule as
+        -- the other DMR machinery when replication in space is disabled.
+        local synthesizer = data.raw["assembling-machine"][gprefix .. "tenemut-synthesizer"]
+        if synthesizer then
+            synthesizer.surface_conditions = synthesizer.surface_conditions or {}
+            table.insert(synthesizer.surface_conditions, { property = "gravity", min = 0.1 })
         end
 
         -- Enforce gravity for specialized planetary Replicator entities

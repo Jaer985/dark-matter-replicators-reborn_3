@@ -9,6 +9,32 @@ data:extend({
     { type = "recipe-category", name = gprefix .. "replication-aquilo" }
 })
 
+-- ── v4.4.0 (B3/C3): the tier and planetary machines share one module contract.
+-- B3: with `dmrsa-replicator-quality = "Normal only"` the `quality` effect is
+-- NOT offered (the machine is what the engine evaluates — the old
+-- `recipe.quality = "normal"` gate in the mirror generator gated nothing).
+-- C3: "consumption" is gone — an efficiency module/beacon would cut the draw
+-- the replication balance is priced against.
+local QUALITY_ALLOWED =
+    helpers.get_startup_setting("dmrsa-replicator-quality", "Normal only") == "Allow quality"
+
+local function planetary_allowed_effects()
+    local effects = { "speed", "pollution" }
+    if QUALITY_ALLOWED then
+        table.insert(effects, "quality")
+    end
+    return effects
+end
+
+-- ── v4.4.0 (D1/G4): sprite geometry, art-calibrated ───────────────────────────
+-- These machines are 2x2 (selection half 1.0) but drew replicator-3.png at
+-- scale 0.66 with NO shift at all: the art sat 0.15 tiles left of its box.
+-- Same rule as replicators.lua: scale = 1.0 * 2/3 = 0.6667 (95 px * 0.6667/32 =
+-- 1.98 tiles in the 2x2 box) and shift = { 1.0*0.4/3 = 0.1333, 1.0*0.02 = 0.02 }.
+local PLANET_SELECTION = 1.0
+local PLANET_SPRITE_SCALE = PLANET_SELECTION * 2 / 3
+local PLANET_SPRITE_SHIFT = { PLANET_SELECTION * 0.4 / 3, PLANET_SELECTION * 0.02 }
+
 -- Common function to define a specialized planetary replicator
 local function make_planetary_replicator(name_suffix, speed, power_mw, tint_color, surface_conds)
     local name = gprefix .. "replicator-" .. name_suffix
@@ -84,7 +110,10 @@ local function make_planetary_replicator(name_suffix, speed, power_mw, tint_colo
                 frame_count = 33,
                 line_length = 11,
                 animation_speed = 1 / 3,
-                scale = 0.66,
+                -- v4.4.0 (D1/G4): 0.66 → the art-calibrated 2/3, plus the
+                -- shift that centres the 1.98 tiles of art in the 2x2 box.
+                scale = PLANET_SPRITE_SCALE,
+                shift = PLANET_SPRITE_SHIFT,
                 tint = tint_color -- BEAUTIFUL VIBRANT PLANETARY TINT OVERLAYS
             }
         },
@@ -102,7 +131,9 @@ local function make_planetary_replicator(name_suffix, speed, power_mw, tint_colo
         module_slots = 3,
         -- v4.2 refino (original-mod study): sin "productivity" (0-ingredient
         -- recipes = duplicación gratis).
-        allowed_effects = { "consumption", "speed", "quality", "pollution" }
+        -- v4.4.0 (B3/C3): quality gate + no "consumption" — see
+        -- planetary_allowed_effects() above.
+        allowed_effects = planetary_allowed_effects()
     }
 
     -- Apply planetary restrictions if Space Age expansion is loaded

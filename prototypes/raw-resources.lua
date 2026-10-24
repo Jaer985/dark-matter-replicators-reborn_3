@@ -1,6 +1,30 @@
 require("defines")
+local helpers = require("lib.helpers")
 local resource_autoplace = require("resource-autoplace")
-resource_autoplace.initialize_patch_set(gprefix.."tenemut", true)
+
+-- v4.3 (mod portal request, evil_star): tenemut can now be produced from
+-- electricity instead of being mined, so the ore itself is optional.
+--
+-- `dmrsa-tenemut-source = "Synthesis only"` removes tenemut from world
+-- generation COMPLETELY:
+--   * the resource-autoplace patch set is not initialized,
+--   * the autoplace spec is not attached to the resource,
+--   * no autoplace-control prototype is registered (so the map-generation
+--     screen has no Tenemut slider and no preset can enable it), and
+--   * data-updates.lua does not inject the control into any planet.
+--
+-- The `resource` prototype ITSELF is kept in every mode on purpose: it carries
+-- no autoplace in synthesis-only mode (so nothing can ever be placed), but
+-- dropping it would break every existing save that already mined/placed
+-- tenemut patches — those maps keep their ore and stay loadable.
+
+local worldgen_enabled = helpers.tenemut_worldgen_enabled()
+
+if worldgen_enabled then
+	-- Registers the patch set the autoplacer uses for this resource. Must only
+	-- run when the resource actually autocplaces.
+	resource_autoplace.initialize_patch_set(gprefix.."tenemut", true)
+end
 
 local autoplace_table = {
 	name = gprefix.."tenemut",
@@ -19,7 +43,7 @@ if spawn_setting and spawn_setting.value == false then
 	autoplace_table.has_starting_area_placement = false
 end
 
-if mods["space-exploration"] then
+if worldgen_enabled and mods["space-exploration"] then
 --[[
 se_default = {
   base_density = 5,
@@ -54,7 +78,9 @@ local resource = {
 	},
 	collision_box = {{ -0.1, -0.1}, {0.1, 0.1}},
 	selection_box = {{ -0.5, -0.5}, {0.5, 0.5}},
-	autoplace = resource_autoplace.resource_autoplace_settings(autoplace_table),
+	-- v4.3: no autoplace spec in "Synthesis only" — the game's autoplacer has
+	-- nothing to place, and the control it would reference is not registered.
+	autoplace = worldgen_enabled and resource_autoplace.resource_autoplace_settings(autoplace_table) or nil,
 	stage_counts = {2500, 2000, 1500, 1000, 500, 250, 100, 40},
 	stages = {
 		sheet = {
@@ -69,18 +95,11 @@ local resource = {
 	map_color = {r=0.550, g=0.392, b=0.550}
 }
 
+-- The mining particle is a plain visual used by the resource's minable: keep
+-- it in every mode (it costs nothing and keeps the prototype set identical
+-- between modes, which is friendlier to blueprint/save diffs).
 data:extend(
 {
-	{
-		type = "autoplace-control",
-		name = gprefix.."tenemut",
-		richness = true,
-		order = "b-rep",
-		category = "resource"
-	},
-
-	resource,
-
 	{
 		type = "optimized-particle",
 		name = gprefix.."tenemut-particle",
@@ -149,4 +168,22 @@ data:extend(
 			}
 		}
 	},
+
+	resource
 })
+
+if worldgen_enabled then
+	data:extend(
+	{
+		{
+			type = "autoplace-control",
+			name = gprefix.."tenemut",
+			richness = true,
+			order = "b-rep",
+			category = "resource"
+		}
+	})
+else
+	helpers.info("Tenemut world generation disabled (dmrsa-tenemut-source = \"Synthesis only\"): "
+		.. "resource kept without autoplace for save compatibility, no autoplace-control registered.")
+end

@@ -50,6 +50,44 @@ function helpers.get_startup_setting(name, default_value)
     return default_value
 end
 
+-- 1b. Tenemut source (v4.3) — single source of truth for the three modes of
+-- the `dmrsa-tenemut-source` startup setting:
+--   "Ore patches"            → worldgen ore, no synthesizer
+--   "Ore patches + synthesis"→ worldgen ore AND synthesizer
+--   "Synthesis only"         → no worldgen ore, synthesizer only
+-- Both queries are additive and default-safe: an unknown/absent value behaves
+-- exactly like the historical default ("Ore patches").
+local TENEMUT_SOURCE_VALUES = {
+    ["Ore patches"] = true,
+    ["Ore patches + synthesis"] = true,
+    ["Synthesis only"] = true,
+}
+
+function helpers.get_tenemut_source()
+    local value = helpers.get_startup_setting("dmrsa-tenemut-source", "Ore patches")
+    if type(value) ~= "string" or not TENEMUT_SOURCE_VALUES[value] then
+        return "Ore patches"
+    end
+    return value
+end
+
+-- True when tenemut ore may be placed by the map generator (autoplace spec,
+-- autoplace-control and the planet map-gen injection all depend on this).
+function helpers.tenemut_worldgen_enabled()
+    return helpers.get_tenemut_source() ~= "Synthesis only"
+end
+
+-- True when the Dark Matter Synthesizer (machine + tech + recipes) exists.
+function helpers.tenemut_synthesis_enabled()
+    return helpers.get_tenemut_source() ~= "Ore patches"
+end
+
+-- True when replication techs require the DMR material pack of their tier.
+-- v4.3: `dmrsa-tenemut-research-required` (default true).
+function helpers.dmr_research_pack_required()
+    return helpers.get_startup_setting("dmrsa-tenemut-research-required", true) ~= false
+end
+
 -- 2. Research difficulty — single source of truth (v3.7.0).
 -- One table defines ALL THREE axes per difficulty so they always match:
 --   cost       = research repetition multiplier (replaces replresearch-item-multiplier)
@@ -102,7 +140,11 @@ function helpers.item_exists(name)
         local item_classes = {
             "item", "ammo", "armor", "gun", "capsule", "tool", "module",
             "item-with-entity-data", "item-with-tags", "spidertron-remote",
-            "space-platform-starter"
+            -- v4.4.0 (B13): `space-platform-starter` is NOT a prototype
+            -- registry — the Space Age starter-pack registry is
+            -- `space-platform-starter-pack`, so the old literal made the
+            -- starter pack invisible to item_exists() forever.
+            "space-platform-starter-pack"
         }
         for _, class in ipairs(item_classes) do
             if data.raw[class] and data.raw[class][name] then
