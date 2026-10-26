@@ -98,6 +98,10 @@ for tier = 1, 5 do
 
     local replicator = {
         type = "assembling-machine",
+        -- v4.8.0: circuit connectors, parity with vanilla assembling machines
+        -- (field absent = distance 0 = wires cannot be attached: measured, see
+        -- research/gate-circuit-wires.md).
+        circuit_wire_max_distance = 9,
         name = gprefix .. "replicator-" .. tier,
         icon = "__dark-matter-replicators-reborn__/graphics/icons/replicator-" .. tier .. ".png",
         icon_size = 64,

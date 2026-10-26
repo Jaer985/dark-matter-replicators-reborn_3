@@ -106,6 +106,9 @@ local function first_allowed(inv)
 end
 
 --- Point the machine's recipe at the step matching the item's current quality.
+--- v4.8.0 note (measured): changing a refiner's recipe by hand or by circuit EMPTIES
+--- its input inventory, and with no item inside this function returns early — so the
+--- auto-detection never overwrites a recipe the player picked. No extra state needed.
 local function sync_recipe(entity)
     local pick = first_allowed(entity.get_inventory(defines.inventory.crafter_input))
         or first_allowed(entity.get_inventory(defines.inventory.crafter_output))

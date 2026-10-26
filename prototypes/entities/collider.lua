@@ -113,6 +113,10 @@ data:extend({
     -- Entity (placeholder: the mod's own tier-5 replicator sheet, violet tinted)
     {
         type = "assembling-machine",
+        -- v4.8.0: circuit connectors, parity with vanilla assembling machines
+        -- (field absent = distance 0 = wires cannot be attached: measured, see
+        -- research/gate-circuit-wires.md).
+        circuit_wire_max_distance = 9,
         name = gprefix .. "collider",
         icons = {
             {

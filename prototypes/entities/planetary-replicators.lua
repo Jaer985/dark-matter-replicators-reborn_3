@@ -41,6 +41,10 @@ local function make_planetary_replicator(name_suffix, speed, power_mw, tint_colo
     
     local entity = {
         type = "assembling-machine",
+        -- v4.8.0: circuit connectors, parity with vanilla assembling machines
+        -- (field absent = distance 0 = wires cannot be attached: measured, see
+        -- research/gate-circuit-wires.md).
+        circuit_wire_max_distance = 9,
         name = name,
         icon = "__dark-matter-replicators-reborn__/graphics/icons/replicator-3.png",
         icon_size = 64,

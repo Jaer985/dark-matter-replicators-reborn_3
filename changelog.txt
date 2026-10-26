@@ -1,4 +1,17 @@
 ---------------------------------------------------------------------------------------------------
+Version: 4.8.0
+Date: 2026-10-26
+  Features:
+    - Replicators, planetary replicators, the Quality Refiner, the Tenemut Synthesizer and the
+      Accelerator Ring now accept circuit wires, exactly like a vanilla assembling machine:
+      enable/disable, read contents, read recipe and set recipe. That makes them usable in a mall or
+      inside a parameterized blueprint (requested on the portal: "Make it connect to the logistics
+      system").
+  Notes:
+    - The refiner still owns its own recipe and keeps it pointed at the item's current quality step.
+      Picking a recipe for it by hand or by circuit is safe: changing a recipe empties the machine's
+      input, and the automatic sync only acts on a refiner that holds an item.
+---------------------------------------------------------------------------------------------------
 Version: 4.7.2
 Date: 2026-10-26
   Bugfixes:
