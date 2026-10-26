@@ -2,6 +2,7 @@ local helpers = require("lib.helpers")
 local CostSolver = require("lib.cost-solver")
 local TargetMapper = require("lib.target-mapper")
 local repltypes = require("lib.repltypes")
+local ItemClass = require("lib.item-class")
 local gprefix = "dmrsa-"
 
 -- Helper to layer appropriate border graphic on dynamic replication technology icons
@@ -304,7 +305,7 @@ function DynamicGenerator.generate()
 
             -- Determine item category and apply FIXED tier override.
             -- Category determines the FLOOR tier; cost-solver can still push HIGHER.
-            local item_category = get_item_category(name, target)
+            local item_category = ItemClass.classify(name, target)
             local category_def = repltypes[item_category]
             if category_def and category_def.tier then
                 if tier < category_def.tier then

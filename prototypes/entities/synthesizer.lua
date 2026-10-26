@@ -69,8 +69,8 @@ data:extend({
             }
         },
         icon_size = 64,
-        subgroup = gprefix .. "replicators",
-        order = "d",
+        subgroup = gprefix .. "power",
+        order = "a",
         place_result = gprefix .. "tenemut-synthesizer",
         stack_size = 50
     },

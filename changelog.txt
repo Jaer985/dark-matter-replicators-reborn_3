@@ -1,4 +1,115 @@
 ---------------------------------------------------------------------------------------------------
+Version: 4.7.2
+Date: 2026-10-26
+  Bugfixes:
+    - Fixed a crash on load in modlists without quality: "Unknown entity name: dmrsa-refiner" during
+      on_init. The Quality Refiner only exists when a quality mod is active, but the runtime script
+      probed the entity name unconditionally, so a vanilla (base only) game could not start.
+      Reported by tikitarik; reproduced headless on 2.1.23 with quality and space-age disabled.
+---------------------------------------------------------------------------------------------------
+Version: 4.7.1
+Date: 2026-10-24
+  Features:
+    - The Quality Refiner is a crafting machine again, with the auto-detection the author asked for:
+      you pick the refining recipe ONCE for the item you are working on, and the machine keeps its recipe
+      pointed at the item's current quality by itself. After a success the item is uncommon, the recipe
+      switches to "refine to rare", and so on - no reselecting.
+    - Real power draw (1 MW) and a real progress bar are back: the recipes do the work, a script only
+      keeps them in sync. One attempt per tier: 1 s at tier 1 up to 5 s at tier 5.
+  Bugfixes:
+    - Closed the quality exploit for real: the recipes now lock the input with `quality_min`/`quality_max`
+      (2.1 wants a quality NAME there). Verified headless: inserting a normal module into the
+      "refine to legendary" recipe is rejected (insert = 0), and accepted by "refine to uncommon".
+    - A runtime recipe prototype exposes `energy`, not `energy_required` - the script reads the right one.
+  Changes:
+    - The empty `dmrsa-refine-cycle` machine of 4.6/4.7 is gone; the refiner is a normal crafting machine
+      with its 1 MW draw back (4.7.0 had removed the power requirement by making it a container).
+---------------------------------------------------------------------------------------------------
+Version: 4.7.0
+Date: 2026-10-24
+  Bugfixes:
+    - Fixed the automatic refiner doing nothing. 4.6.x built it as an assembling machine with an empty
+      fixed recipe, and an assembling machine's input inventory is created from its recipe's ingredient
+      list: with no ingredients it has ZERO slots and can_insert() answers false for every item, so
+      neither an inserter nor a script could put anything in (verified headless on 4.6.1: len=0,
+      can_insert=false, inserted=0). The machine is a container again - 20 slots that accept any item.
+  Changes:
+    - The refiner has no power draw any more: a container cannot consume electricity. It is
+      time-limited instead of energy-limited - 1 s per attempt on tier-1 items up to 5 s on tier-5,
+      with the same 5 / 2.5 / 1.25 / 1 % chances and the same 1 % destruction risk.
+    - Removed the empty `dmrsa-refine-cycle` recipe and its localisation: there is no crafting machine
+      left to run it.
+---------------------------------------------------------------------------------------------------
+Version: 4.6.1
+Date: 2026-10-24
+  Bugfixes:
+    - Fixed "Unknown key: recipe-name.dmrsa-refine-cycle" on the Quality Refiner: the hidden automatic
+      cycle recipe had no localised name. Added in English and Spanish.
+    - The refiner's item and entity descriptions were rewritten for the automatic machine (drop an item
+      in, 1 % loss per attempt, one attempt per tier per second) - they still described the old
+      recipe-based refiner and its 5 % loss.
+    - The cycle recipe takes 60 s instead of 1 s, so the machine's progress bar no longer restarts every
+      second. Nothing about the refining itself changed (the script owns the timing).
+---------------------------------------------------------------------------------------------------
+Version: 4.6.0
+Date: 2026-10-24
+  Features:
+    - The Quality Refiner is AUTOMATIC. No more recipe to choose: insert any replicable item and the
+      machine walks it up one quality level at a time, on its own. The machine keeps a single hidden
+      fixed recipe (empty by design) so it still needs power and still animates, and the mod gains
+      its first runtime script (one table pass every 0.5 s, only over refiners holding an item).
+    - One attempt per tier per second: 1 s for tier-1 items up to 5 s for tier-5. Chances are
+      unchanged (5 % / 2.5 % / 1.25 % / 1 % by step, 1 % destruction), the ladder never skips, and
+      the top quality simply has no next step.
+    - The quality ladder is built from the game's own quality prototypes ordered by level, so mods
+      that add or reorder quality levels get a working chain instead of being ignored.
+  Changes:
+    - Removed the per-item, per-step refining recipes (~800 recipes on a small modlist) and the
+      machine picker with them: the 4.1.0 "empty picker" class of bug cannot come back.
+    - Closed an exploit: recipes pinned the input quality with `ingredients[].quality`, which is not
+      a gate in Factorio 2.1 (the real filter is `quality_min`/`quality_max`), so a normal item could
+      be pushed through the legendary step. There are no steps to pick now — the script reads the
+      item's actual quality and only ever advances it by one level.
+---------------------------------------------------------------------------------------------------
+Version: 4.5.1
+Date: 2026-10-24
+  Features:
+    - Replicators can be replicated again. The five tiers are self-replication targets, exactly
+      as v4.2 intended and as the upstream mod shipped them (device3-5, upgrade): the player
+      duplicates a machine instead of hand-building it. Each tier is priced on its own rung -
+      6.32 s / 12.64 s / 25.28 s / 50.56 s / 101.12 s - in its own replicator. Two loop guards
+      had to be opened: the parts-bill clamp no longer reprices a replicator by its own cost
+      (it lifted them to 3,695-15,612 s, far above the 3,600 s ceiling, which then deleted them).
+  Changes:
+    - The Simple Replicator is the red-pack machine again: the replicator that offers a recipe is
+      now chosen with the same ladder its time uses, max(chain difficulty, science pack that
+      unlocks it). Machines that unlock with green or military science no longer sit on tier 1
+      (assembling machine 2, steel furnace, chemical plant, oil refinery, lab, radar, gun turret,
+      grenades, piercing rounds), petroleum and military items start at tier 2, and the Logistic
+      science pack scores tier 2 instead of 1. Vanilla + Space Age tier 1: 92 recipes -> 40.
+    - Machines and military items carry a tier-2 floor, so a mid-game building can never be
+      offered by the tier-1 machine even when its unlocking technology is a trigger (no science):
+      oil-processing and electronics are trigger techs and scored tier 1 before this.
+    - Fuel class floor: only burnables worth at least 1 MJ receive the duplication ladder.
+      Spoilage (250 kJ) and tree seeds (100 kJ) no longer carry +100/200/300 % productivity.
+    - Molten copper is priced like molten iron: 12.5 s instead of 53.6 s. Same lava, same foundry,
+      same unlimited source.
+    - The replication lab researches at twice the vanilla rate (researching_speed 2.0); the two
+      speed module slots still stack on top of it.
+    - Replication tab: the dark-matter power chain (synthesizer, accelerator ring, annihilation
+      chamber, annihilation coil) has its own subgroup in build order, and the resources row is
+      called "Dark matter".
+    - The replication picker is organised by CATEGORY again, by STRUCTURE instead of by name:
+      Machines, Power, Science packs, Modules, Ores, Plates & alloys, Intermediates, Fluids &
+      chemicals, Logistics, Military, Fuels, Organic, Dark matter. The old classifier guessed from
+      the item name and left 104 recipes in "General" and 65 in "Replication resources" (with
+      iron-chest filed as a pure element and copper-cable as a shaped object). The new one reads
+      the prototype - the place_result entity type, the item type, the fuel value, the smelting
+      recipe, the raw-resource subgroup - so any modlist files itself, planet items included.
+  Bugfixes:
+    - The replicator rows of the replication tab no longer mix the power machines with the
+      replicator tiers.
+---------------------------------------------------------------------------------------------------
 Version: 4.5.0
 Date: 2026-10-22
   Features:

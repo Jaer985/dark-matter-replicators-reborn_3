@@ -1,100 +1,38 @@
--- Replication type definitions
--- Each type has: name, tier (fixed), and order (for sorting).
--- Tier is the FIXED replication tier for items of this category.
--- Items classified here will NEVER be lower than this tier.
--- The cost-solver can still push tier HIGHER for complex items.
+-- Replication type definitions (v4.5.1 — author-approved taxonomy)
 --
--- Categories with tier=nil use dynamic tier from cost-solver.
--- The category display name is sourced from the locale file
--- [replcategory-name] section keyed by the category name, NOT from a hardcoded
--- `localized` field here. This avoids locale drift between code and translation files.
+-- The category of an item is decided STRUCTURALLY by lib/item-class.lua (entity
+-- type, item type, fuel value, smelting recipe, minability), not by its name.
+-- This table only carries the display/tech metadata for each category:
+--   * tier  = FIXED minimum replication tier for items of this category (nil =
+--             dynamic, from the cost solver);
+--   * order = sort key of the picker subgroup (a, b, c … in the order below).
+--
+-- Order approved by the author (2026-10-24): machines · power · science ·
+-- modules · ores · plates · intermediates · chemicals · logistics · military ·
+-- fuels · organic · darkmatter.
+-- Display names live in the locale files ([replcategory-name] and
+-- [item-subgroup-name]) keyed by the category name, never hardcoded here.
 
 local repltypes = {
-    ore = {
-        name = "ore",
-        tier = 1,
-        order = "aa",
-    },
-    element = {
-        name = "element",
-        tier = 2,
-        order = "ba",
-    },
-    shape = {
-        name = "shape",
-        tier = 2,
-        order = "bb",
-    },
-    alloy = {
-        name = "alloy",
-        tier = 3,
-        order = "bc",
-    },
-    chemical = {
-        name = "chemical",
-        tier = 3,
-        order = "bd",
-    },
-    organic = {
-        name = "organic",
-        tier = 3,
-        order = "ce",
-    },
-    military = {
-        name = "military",
-        tier = 3,
-        order = "cf",
-    },
-    military_advanced = {
-        name = "military-advanced",
-        tier = 5,
-        order = "cg",
-    },
-    module = {
-        name = "module",
-        tier = 3,
-        order = "ea",
-    },
-    module_advanced = {
-        name = "module-advanced",
-        tier = 4,
-        order = "eb",
-    },
-    life = {
-        name = "life",
-        tier = 5,
-        order = "eb",
-    },
-    exotic = {
-        name = "exotic",
-        tier = 5,
-        order = "ec",
-    },
-    magic = {
-        name = "magic",
-        tier = 5,
-        order = "ed",
-    },
-    alien = {
-        name = "alien",
-        tier = 5,
-        order = "ee",
-    },
-    science = {
-        name = "science",
-        tier = nil,  -- dynamic: based on science pack level
-        order = "ef",
-    },
-    -- Fallback for anything not classified above
-    general = {
-        name = "general",
-        tier = nil,  -- dynamic: computed by cost-solver
-        order = "eg",
-    },
+    machines = { name = "machines", tier = 2, order = "aa" },
+    power = { name = "power", tier = 3, order = "ab" },
+    science = { name = "science", tier = nil, order = "ac" },
+    modules = { name = "modules", tier = 3, order = "ad" },
+    ores = { name = "ores", tier = 1, order = "ba" },
+    plates = { name = "plates", tier = 2, order = "bb" },
+    intermediates = { name = "intermediates", tier = 2, order = "bc" },
+    chemicals = { name = "chemicals", tier = 3, order = "bd" },
+    logistics = { name = "logistics", tier = 1, order = "ca" },
+    military = { name = "military", tier = 3, order = "cb" },
+    fuels = { name = "fuels", tier = 1, order = "cc" },
+    organic = { name = "organic", tier = 3, order = "cd" },
+    darkmatter = { name = "darkmatter", tier = 1, order = "da" },
+    -- Fallback used by the legacy name-pattern helper only.
+    general = { name = "general", tier = nil, order = "zz" },
 }
 
--- Known element names for auto-detection (lowercase)
--- Used by get_item_category to detect pure elements
+-- Known element names (kept for the legacy classifier and the tech-icon border
+-- helper; the structural classifier does not need them).
 repltypes.element_names = {
     "hydrogen", "helium", "lithium", "beryllium", "boron",
     "carbon", "nitrogen", "oxygen", "fluorine", "neon",
@@ -116,5 +54,6 @@ repltypes.element_names = {
     "protactinium", "uranium", "neptunium", "plutonium",
     "americium", "curium",
 }
+
 
 return repltypes

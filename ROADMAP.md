@@ -1,8 +1,9 @@
 # DMR — Roadmap
 
-_Estado del fork: Post 3.0 (Jaer985) — Base: Factorio 2.1 (solo 2.1 desde v4.0)_
-_Última publicada en portal: 4.3.1 (2026-10-17). 4.2.1 se construyó y pasó gate test pero no se subió (saltada). En desarrollo: v4.4.0 (timing model v3 + bucle de energía de materia oscura) — pendiente de gate test; `info.json` sigue en 4.3.1._
-_En desarrollo (v4.4.0): timing model v3 (`lib/timing-model.lua`), bucle de energía de materia oscura (Anillo acelerador + Cámara de aniquilación) e investigación de duplicación de combustible. Plan: `research/plan-v440-timing-and-darkmatter.md`._
+_Estado del fork: Post 4.6 (Jaer985) — Base: Factorio 2.1 (solo 2.1 desde v4.0)_
+_Última publicada en portal: **4.7.1** (2026-10-24, 36 releases; 4.7.0 quedó sustituida). Gates sobre el zip: data stage 0 errores / 0 warnings, mapa headless creado con `control.lua` cargado y 0 errores, 9/9 suites. Descripción y FAQ del portal al día; anuncio y changelog de Discord verificados (con cabeceras de idioma)._
+_4.5.1: Replicadores auto-replicables (6,32/12,64/25,28/50,56/101,12 s) · techo de 1 MJ en la clase combustible (spoilage y semillas fuera del escalón de duplicación) · tier del replicador = max(cadena, pack) + suelo 2 para máquinas y militar (tier 1 vanilla 92 → 40) · cobre fundido 53,6 → 12,5 s · laboratorio de replicación researching_speed 2,0 · pestaña: subgrupo propio para la cadena de energía._
+_Pendiente inmediato: gate test en juego de 4.5.1 (replicador auto-replicable, tamaño del picker, pestaña) y, después, **4.6.0**: escalera del refinador por calidad de entrada + niveles de calidad de otros mods._
 
 > El antiguo `roadmap.txt` del upstream (nihilistzsche / Honktown) está congelado en la era 0.17/0.18 y ya no aplica. Este documento es la fuente viva de planes para el fork moderno.
 
@@ -10,7 +11,43 @@ _En desarrollo (v4.4.0): timing model v3 (`lib/timing-model.lua`), bucle de ener
 
 ## ✅ Cerrado recientemente
 
-- **v4.3.0** (2026-10-16) — Modo sin mineral + sintetizador de materia oscura (petición del portal, hilo de evil_star)
+- **v4.7.1** (2026-10-24, publicado) — Refinador de calidad: máquina de crafteo + autodetección de receta
+  - La 4.6.x/4.7.0 no refinaba: una assembling-machine construye su inventario de entrada desde los
+    ingredientes de su receta, así que con receta vacía tenía **0 huecos** y `can_insert=false` (medido en
+    motor: `len=0`, `inserted=0`). La 4.7.0 lo resolvió como contenedor (20 huecos, sin energía), pero el
+    autor quiere crafteo: **4.7.1 vuelve a la máquina de crafteo** con sus recetas, 1 MW y barra real.
+  - **Autodetección**: `control.lua` mantiene la receta apuntando al escalón que corresponde a la calidad
+    actual del item. Eliges la receta UNA vez por item; tras un acierto el item sube y el script cambia solo
+    a "refine to rare", luego epic, luego legendary.
+  - **Exploit cerrado**: el gate real en 2.1 es `quality_min`/`quality_max` (y acepta NOMBRE de calidad, no
+    nivel). Verificado en motor: una pieza normal en la receta legendaria → `insert = 0`; en la de uncommon → `1`.
+  - Ritmo: 1 s por intento en tier 1 … 5 s en tier 5 (`lib/refiner-logic.cycle_seconds`), probabilidades
+    5 / 2,5 / 1,25 / 1 % y 1 % de pérdida.
+  - Pitfall registrado: en runtime `LuaRecipePrototype` expone **`energy`**, no `energy_required`.
+  - Gates: data stage 0/0, mapa headless 0 errores, 9/9 suites.
+
+- **v4.5.1** (2026-10-24, publicado al portal) — Replicación de todo el paquete de 4.4/4.5 + el gate test del autor
+  - **Replicadores auto-replicables**: los cinco tiers vuelven a ser objetivos (`dmrsa-repl-dmrsa-replicator-1..5`), a 6,32 / 12,64 / 25,28 / 50,56 / 101,12 s, cada uno en su tier. La whitelist de `target-mapper` (intención v4.2, `repltech_recipe(device3-5, upgrade=true)` del upstream) era **código muerto**: `is_own_machine` la anulaba por nombre. Al abrirla aparecieron otros dos cierres: el clamp C5 repreciaba cada replicador por su propia parts bill (3.695-15.612 s → techo de 3.600 s lo borraba) y el bloque de "recycler loop" hacía lo mismo. Medido: 254 recetas (antes 249), 0 exclusiones por techo.
+  - **Suelo de la clase combustible**: `TimingModel.is_fuel_class()` = quemable **y** `fuel_value >= 1 MJ`. Antes/después: 18 → 16 recetas con `allow_productivity`; fuera spoilage (250 kJ) y semilla de árbol (100 kJ).
+  - **El tier del replicador = la escalera del tiempo**: categoría = `floor(max(cadena, pack))`, con suelo 2 para máquinas y militar. Causa raíz: la categoría salía solo del cost-solver, así que todo lo desbloqueado por ciencia verde/militar caía en el replicador simple; y `oil-processing`/`electronics` son techs *trigger* (sin unit) → pack 1.0. Vanilla+SA: tier 1 **92 → 40 recetas**. `PACK_LEVELS` de logistic alineado a 2.
+  - **Cobre fundido**: 53,6 → 12,5 s (la tabla de fluidos tenía `molten-iron` y no `molten-copper`; misma lava, mismo foundry).
+  - **Laboratorio de replicación**: `researching_speed = 2.0` (no tenía ninguno), módulos de velocidad siguen apilando.
+  - **Menú de recetas por CATEGORÍA y por estructura** (`lib/item-class.lua`, nuevo): clasifica leyendo el prototipo (tipo de entidad de `place_result`, tipo de item, `fuel_value`, receta de smelting, subgrupo `raw-resource`) en vez del nombre. 13 categorías: machines · power · science · modules · ores · plates · intermediates · chemicals · logistics · military · fuels · organic · darkmatter. Antes: 104 recetas en "General" y 65 en "Replication resources" (con `iron-chest` como "elemento puro" y `copper-cable` como "objeto con forma"). Los items planetarios ya no se vuelcan en "resources".
+  - **Pestaña de crafteo**: subgrupo propio `dmrsa-power` (synthesizer → anillo → cámara → bobina, en orden de construcción) y la fila de recursos renombrada a "Dark matter"/"Materia oscura".
+  - Tests: `test_mirror` y `test_economy_invariants` afirmaban las reglas viejas (replicadores = loop, logistic = tier 1); actualizados. 9/9 suites PASS.
+
+- **v4.5.0** (2026-10-22, publicado al portal) — Bobina de aniquilación (`dmrsa-annihilation-coil`): `burner-generator` 2×2 que quema materia oscura directamente en electricidad, sin calor, agua, intercambiadores ni turbinas. Mismo balance: 25 GJ → 41,6667 MW × 600 s, `effectivity = 1.0`, categoría de combustible privada. Tech propia tras `dmrsa-annihilation` (75 unidades). Locale EN/ES con paridad de claves.
+
+- **v4.4.0** (2026-10-22, publicado al portal) — Bucle de energía de materia oscura + timing model v3
+  - Anillo acelerador (250 MW, 25 tenemut + 1 conducto → 1 materia oscura en 200 s) y Cámara de aniquilación (reactor, 25 GJ = 600 s a 41,6667 MW, sin bonus de vecinos, materia oscura solo se quema ahí).
+  - Investigación de duplicación (tiers 3/4/5): +100/+200/+300 % acumulativo (2/3/4 items por ciclo) sobre recetas de combustible y sobre la colisión del anillo.
+  - Timing model v3: tiempo = 6,32 s × 2^(tier-1) × complejidad (1 + 0,02 × pasos, tope 1,50), techo 200 s aplicado después del multiplicador de dificultad. Ammonia/holmium 25 s, hierro fundido 12,5 s (antes los tres a 200 s).
+  - Refinador: recetas seleccionables otra vez (el picker estaba vacío desde 4.1.0: `hidden` en vez de `hide_from_player_crafting`), 1 MW, probabilidades ×5, pérdida 5 % → 1 %.
+
+- **v4.3.1** (2026-10-17, publicado) — Solo texto: descripción del mod al día (no cambia gameplay).
+
+- **v4.3.0** (2026-10-16, publicado) — Modo sin mineral + sintetizador de materia oscura
+  (petición del portal, hilo de evil_star)
   - Nuevo ajuste `dmrsa-tenemut-source` (3 modos): Ore patches (default, sin cambios) / Ore patches + synthesis / Synthesis only. El último quita el tenemut del worldgen por completo: sin autoplace spec, sin autoplace-control, sin inyección en los planetas (data-updates bloques 1+2).
   - Nueva máquina **Dark Matter Synthesizer** (`prototypes/entities/synthesizer.lua`): 1 MW, 4 s por tenemut, `ingredients = {}` (solo electricidad), categoría propia `dmrsa-synthesis`, receta de construcción propia. Tech nueva `dmrsa-tenemut-synthesis` en `technologies.lua` (prereq `electronics`, solo automation science → sin candado circular: no se necesita tenemut para investigar lo que produce tenemut).
   - Nuevo ajuste `dmrsa-tenemut-research-required` (default ON): al desactivarlo los techs de replicación usan los packs vanilla de su tier en lugar del pack DMR — `make_research_unit` + ambos `add_research_pack` + red de seguridad contra listas de ingredientes vacías (bug "sin coste" de v4.2) + fallback por tier para los techs de materiales.
@@ -254,20 +291,54 @@ Objetivo: que DMR siga balanceado con cualquier modlist de overhaul (Bob's/Angel
   - **IMPLEMENTADO 2026-08-22 (v4.2)**: 7 cadenas separadas (las 10 candidatas se redujeron a 7 tras el dump: bob-oil-processing no existe, angels-oil-processing y bob-electronics no tienen niveles). Espejos 466→492 (+26). Cada mirror-N gateado por el tier del COST-SOLVER de sus items (no por la science level de la tech original) — asm-6 detrás de replication-4, belts rojas/azules separadas. Efecto colateral documentado: `angels-advanced-chemistry-1` mezcla 6 items tier1 + 1 tier3 → el mirror queda tier 3 (max) — la chem básica de Angel's se retrasa a materials-3 (aceptado, progresión química).
 - [ ] **Compatibilidad explícita con PyMods / otros frameworks de scripting** — detectar vía `script.on_load` si hay mods Python activos
 - [ ] **Replicación de OmniMatter + recipe tenemut-from-omnite** (pendiente upstream)
-- [ ] **Replicación de Darkstar Utilities** — ❌ NO ENCONTRADO (2026-08-22): sin resultados en el portal ni GitHub con "darkstar"/"DarkstarUtilities"; item heredado del roadmap upstream 0.17/0.18. Eliminable cuando se audite el futuro.
 - [ ] **Cost calculator por crafting difficulty** — actualmente solo `normal`; ofrecer `expensive` con multiplicadores
 - [ ] **Scenario standalone sin ores** (item upstream 0.8.1) — start con grid, replicators y techs; útil para testing rápido
 - [x] **Bucle de energía de materia oscura (IMPLEMENTADO v4.4.0)** — el item `dmrsa-dark-matter` ya no está huérfano: lo produce el **Anillo acelerador** (250 MW × 200 s = 50 GJ por unidad, 25 tenemut + 1 conducto de nanofase) y lo consume la **Cámara de aniquilación** (`type = "reactor"`, 41,6667 MW de calor durante 600 s por unidad, calor → intercambiadores y turbinas vanilla; sin bonificación de vecinos porque la materia metaestable se aniquila consigo misma). Investigación de duplicación (`dmrsa-duplication-3/4/5`) con `change-recipe-productivity`: +100 %/+200 %/+300 % → el anillo pasa de 0,50× a 2,00×. Decisión pendiente (ya no bloqueante): si el scoop pasa de item de research a máquina extractora.
 
 ---
 
+## ✅ v4.6.0 — Refinador de calidad automático (CERRADA y publicada 2026-10-24)
+
+Implementado tal como se aprobó: la máquina ya no tiene recetas que elegir.
+
+- **`control.lua`** (primer y único script de runtime del mod): registra los refinadores con `on_built`/
+  `on_removed` y recorre **solo** los registrados cada 30 ticks (0,5 s). Sin escaneo del mapa, sin coste
+  si no hay ninguno.
+- **Receta fija vacía** (`dmrsa-refine-cycle`, `fixed_recipe`): la máquina sigue necesitando energía y
+  animándose, pero no hay picker — el bug del menú vacío (4.1.0 → 4.3.1) no puede repetirse.
+- **`lib/refiner-logic.lua`**: escalera desde `data.raw.quality` ordenada por `level` (huecos incluidos),
+  probabilidad por posición (5 / 2,5 / 1,25 / 1 %, suelo 1 %), 1 % de pérdida, y **nunca salta un
+  escalón**. `cycle_seconds` = un segundo por tier (log2 sobre la escalera 6,32 s → 1-5 s).
+- **Exploit cerrado**: `ingredients[].quality` NO filtra la entrada en 2.1 (el filtro real es
+  `quality_min`/`quality_max`); el autor lo reprodujo metiendo una pieza común en el escalón legendario.
+  Sin recetas por escalón no hay nada que elegir.
+- Eliminadas ~800 recetas `dmrsa-refine-*` por item y el generador (`lib/refiner-generator.lua`).
+- Tests: `test_refiner_logic.lua` (27 checks: escalera, no-skip, probabilidades, ritmo por tier, roll,
+  240 ciclos esperados). 9/9 suites PASS.
+- Gates sobre el zip 4.6.0: data stage exit 0 / 0 errores / 0 warnings · mapa headless creado con
+  `control.lua` cargado (checksum en el log) y 0 errores.
+
+---
+
 ## 🔧 Mejoras técnicas pendientes (backlog)
 
+- [ ] **Modelo de coste 3.7.1 como opción (señal del portal, 2026-10-24)** — existe un mod de terceros
+  `dark-matter-replicators-reborn-cost-revert` (creado el 2026-10-24, 4 descargas) que revierte la fórmula de
+  tiempo de replicación a la de **3.7.1**. No se pudo inspeccionar el zip (la descarga del portal pide sesión),
+  así que el diff exacto está pendiente. Lo que cambió entre 3.7.1 y 4.x: el solver recursivo con CT 3-7× +
+  multiplicador de máquina 1,5-3,5× + bandas fijas 2,7-16 / 5,3-32 / 10,6-64 / 20-120 / 33,3-200 se sustituyó
+  en 4.4.0 por el modelo cerrado (6,32 s × 2^(tier-1) × complejidad, techo 200 s) y se añadió la clase
+  combustible por valor de combustión + el clamp C5 de arbitraje.
+  Propuesta: ajuste de arranque `dmrsa-cost-model` = **v4 (forma cerrada, por defecto)** / **3.7.1 (bandas
+  clásicas)**, para que ese mod deje de ser necesario y los jugadores que prefieren el modelo viejo se queden
+  en el principal. Coste real: reinyectar la ruta antigua en `lib/timing-model.lua` detrás del flag + fixtures
+  de ambos modos. Decisión del autor pendiente.
 - [x] **Suite de tests de cost-solver** — DMRL: `dmr-tests/` (fuera del source dir, no se empaqueta). Harness mockea `data.raw`/`settings`, carga los módulos reales de lib/, fixtures cubren los bugs de tier v3.5.9-3.5.19. Correr: `cd dmr-tests && lua5.2 run_tests.lua`. Factorio usa Lua 5.2 (goto en cost-solver).
 - [ ] **Ampliar fixtures** — añadir casos SA reales (foundry metallurgy, holmium, tungsten) y mods (Bob's cycles con tech)
 - [ ] **Documentar el patrón de orphan techs** — el `planet_match` de PASS 3 es un patrón nuevo que debería estar en una nota para futuros mantenedores
 - [ ] **Refactor `data-final-fixes.lua`** — 5 PASS en `prototypes/fixes/` (generate, prereqs, orphans, lab-inputs, empty-categories)
-- [ ] **Audit de `repltypes.lua` y `target-mapper.lua`** — `_2` eliminado en changelog, pero el gprefix replacement merece una pasada para asegurar consistencia
+- [x] **Audit de `repltypes.lua`** — ✅ v4.5.1: reescrito a las 13 categorías aprobadas y el `general`/`shape`/`element` por nombre quedó sustituido por `lib/item-class.lua` (clasificador estructural).
+- [ ] **Pasada de `gprefix` en `target-mapper.lua`** — la sustitución de prefijo sigue mereciendo una revisión de consistencia (el `_2` ya se eliminó en changelog).
 - [x] **Localization ES-ES** — al día (paridad de claves EN/ES verificada 2026-10-19; sin claves muertas, sin CRLF)
 
 ---
@@ -283,11 +354,10 @@ Objetivo: que DMR siga balanceado con cualquier modlist de overhaul (Bob's/Angel
 
 ---
 
-## 🎯 Prioridad inmediata (estado 2026-08-22, al día del trabajo en curso)
+## 🎯 Prioridad inmediata (estado 2026-10-24, tras publicar 4.5.1)
 
-1. **Gate test 4.2.0 en juego** — probar el zip 4.2.0 con la modlist real (138 mods): tiempos B2 (belt ~3s, centrifuge ~20s reales), kW 1/3/8/15/30 MW (red = el coste), máquinas ×1.5-3.5, planetarios 40/80 MW, refiner ×3/4MW, replicadores replicables ("Replication: Replicator 1"), research 10×tier (sin item_count), ores raros más caros, módulos productivity grises
-2. **Docs del portal** — actualizar `mod-portal-description.md` + README (balance B2, settings, features 4.1/4.2)
-3. **Publicar 4.2.0 al portal** — pipeline arriba (acumula 4.0.0→4.2.0: Quality Refiner + baseline Fix + B1-B5 + rebalance B2 + refino original)
-4. **Cierre B2** — validar spread de máquinas (1.5-3.5x) y planetarios con datos del gate test
-5. **Backlog técnico** — ampliar fixtures (SA reales), refactor data-final-fixes, audit repltypes/target-mapper, documentar patrón orphan-tech
-6. **Futuro** — Yuoki (cuando 2.1), PyMods, OmniMatter, Darkstar, cost expensive, scenario standalone, reactor chain "dark energy"
+1. **Gate test 4.6.0 en juego**: meter un item en el refinador y verlo subir de nivel (ritmo 1-5 s por tier), el 1 % de pérdida, que no salta escalones y que el inventario de salida lo recoge un inserter.
+2. **Refinador automático — observaciones del gate test**: si el ritmo o la probabilidad se sienten mal en partida, se ajustan en `lib/refiner-logic.lua` (un número cada uno).
+3. **Cierre de B2** — validar con datos reales el spread de máquinas (1,5-3,5×) y el comportamiento planetario (40/80 MW); necesita el gate test, no se puede verificar headless.
+4. **Backlog técnico** — fixtures SA reales (foundry metallurgy, holmium, tungsten), documentar el patrón orphan-tech, refactor de `data-final-fixes.lua` en `prototypes/fixes/`, pasada de `gprefix` en `target-mapper.lua`.
+5. **Aparcado / futuro** — Yuoki (cuando esté en 2.1), PyMods (`script.on_load`), OmniMatter + tenemut-from-omnite, coste `expensive`, escenario standalone sin ores; Darkstar Utilities: línea borrada el 2026-10-24 (no existe en el portal ni en GitHub; fósil del upstream 0.17).

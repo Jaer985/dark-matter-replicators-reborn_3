@@ -26,6 +26,14 @@ data:extend({
         name = gprefix .. "replicators",
         group = "dmrsa-replication",
         order = "b[dmrsa-replicators]"
+    },
+    -- v4.5.1 (author): the dark-matter POWER chain gets its own row instead of
+    -- being mixed into the replicators: synthesizer -> ring -> chamber -> coil.
+    {
+        type = "item-subgroup",
+        name = gprefix .. "power",
+        group = "dmrsa-replication",
+        order = "c[dmrsa-power]"
     }
 })
 
@@ -36,7 +44,7 @@ for i = 1, 5 do
             type = "item-subgroup",
             name = gprefix .. "replication-tier-" .. i,
             group = "dmrsa-replication",
-            order = "c[dmrsa-tier-" .. i .. "]"
+            order = "d[dmrsa-tier-" .. i .. "]"
         }
     })
 end
@@ -46,17 +54,19 @@ end
 -- category (modules, weapons, chemicals...) instead of scanning each tier.
 -- Mirrors the [replcategory-name] locale keys so names resolve automatically.
 local category_subgroups = {
-    "ore", "element", "shape", "alloy", "chemical", "organic",
-    "module", "module-advanced", "science", "military", "military-advanced",
-    "life", "exotic", "magic", "alien", "general"
+    -- v4.5.1: the author-approved taxonomy (see lib/repltypes.lua). Order is the
+    -- display order in the replication picker: machines first, darkmatter last.
+    "machines", "power", "science", "modules", "ores", "plates",
+    "intermediates", "chemicals", "logistics", "military", "fuels", "organic",
+    "darkmatter"
 }
-for _, cat in ipairs(category_subgroups) do
+for i, cat in ipairs(category_subgroups) do
     data:extend({
         {
             type = "item-subgroup",
             name = gprefix .. "replication-" .. cat,
             group = "dmrsa-replication",
-            order = "d[dmrsa-cat-" .. cat .. "]"
+            order = string.format("e[dmrsa-cat-%02d-%s]", i, cat)
         }
     })
 end

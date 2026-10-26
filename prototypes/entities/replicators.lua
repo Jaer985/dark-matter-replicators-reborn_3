@@ -305,6 +305,12 @@ data:extend({
             usage_priority = "secondary-input"
         },
         energy_usage = "60kW",
+        -- v4.5.1 (gate test, author): the replication lab carries the whole
+        -- mirror tree (~1,500 techs with a real modlist) and had no research
+        -- speed at all. It is the tier-5 lab of the mod, so it researches at
+        -- double the vanilla rate; the speed modules it accepts (2 slots) stack
+        -- on top of this.
+        researching_speed = 2.0,
         inputs = {
             gprefix .. "tenemut",
             gprefix .. "dark-matter-scoop",

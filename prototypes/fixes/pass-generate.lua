@@ -63,8 +63,11 @@ end
 -- v4.1.0 (Quality Refiner): dynamic refining recipes, one per replicable item
 -- per quality step. Runs AFTER the mirror generator so it can read the real
 -- dmrsa-repl-* recipes (energy costs). No-op when no quality mod is active.
-local RefinerGenerator = require("lib.refiner-generator")
-RefinerGenerator.generate()
+-- v4.7.1: the refiner is a CRAFTING MACHINE again (author's call): one recipe per
+-- item per quality step, real power draw and progress bar, and control.lua keeps
+-- the machine's recipe in sync with the item's current quality so the chain walks
+-- itself. The recipes now lock the input quality with `quality_min`/`quality_max`
+-- (in 2.1 `ingredients[].quality` is NOT a gate — that was the exploit).
 
 -- Attach planetary unlocks to their corresponding planetary technology nodes
 if mods["space-age"] and planetary_unlocks then
@@ -79,3 +82,6 @@ if mods["space-age"] and planetary_unlocks then
         end
     end
 end
+
+local RefinerGenerator = require("lib.refiner-generator")
+RefinerGenerator.generate()

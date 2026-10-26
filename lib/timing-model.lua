@@ -259,6 +259,10 @@ TimingModel.FLUID_UNIT_TIMES = {
     ["ammonia"]          = 1.00,   -- 25 s (was 200 s)
     ["holmium-solution"] = 1.00,   -- 25 s (was 200 s)
     ["molten-iron"]      = 0.50,   -- 12.5 s (was 200 s; lava is unlimited)
+    -- v4.5.1 (gate test): molten-copper comes out of the same foundry and the
+    -- same lava as molten-iron and was left on the derived pass at 53.6 s — a
+    -- 4.3x price for a sibling product of the same unlimited source. Same class.
+    ["molten-copper"]    = 0.50,   -- 12.5 s (was 53.6 s)
     -- declared per-craft values from the previous pass, expressed per unit
     ["lithium-brine"]    = 0.18,   -- 4.5 s per craft
     ["fluorine"]         = 0.18,   -- 4.5 s per craft
@@ -393,6 +397,25 @@ function TimingModel.is_cheap_fuel(proto)
     local j = TimingModel.fuel_joules(proto.fuel_value)
     if not j or j <= 0 then return false end
     return j <= TimingModel.REFINER_FUEL_BLACKLIST_MJ
+end
+
+-- v4.5.1 — the ACCIDENTAL-BURNABLE floor.
+--
+-- Some items carry a token fuel_value as a side effect of being organic waste or
+-- a seed (spoilage 250 kJ, tree seed 100 kJ) and are not fuel in any sense the
+-- player recognises. They used to fall into the fuel class, which (a) repriced
+-- them by burn value and (b) handed them the duplication ladder
+-- (+100/200/300 % from dmrsa-duplication-3/4/5) — the "accidental burnables".
+-- One megajoule is the floor: every real solid fuel in base + Space Age sits at
+-- 1 MJ or above, and the accidental ones sit below it.
+TimingModel.FUEL_CLASS_MIN_JOULES = 1e6
+
+-- The fuel CLASS (pricing by burn value + duplication research) — burnable AND
+-- worth burning. `is_burnable` stays as-is for the pure "has a fuel value" test.
+function TimingModel.is_fuel_class(proto)
+    if not TimingModel.is_burnable(proto) then return false end
+    local j = TimingModel.fuel_joules(proto.fuel_value)
+    return j ~= nil and j >= TimingModel.FUEL_CLASS_MIN_JOULES
 end
 
 -- The burn-value price (F-2a/F-3b): t = 2 * fuel_value * 2.5 / R seconds,

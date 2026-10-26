@@ -111,8 +111,8 @@ data:extend({
             }
         },
         icon_size = 64,
-        subgroup = gprefix .. "replicators",
-        order = "f",
+        subgroup = gprefix .. "power",
+        order = "c",
         place_result = gprefix .. "annihilator",
         stack_size = 20
     },

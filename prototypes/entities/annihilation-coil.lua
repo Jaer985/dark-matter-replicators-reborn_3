@@ -98,10 +98,10 @@ data:extend({
             }
         },
         icon_size = 64,
-        -- Same subgroup as every other DMR machine; order "g" sorts it right
-        -- after the Annihilation Chamber ("f") and the Accelerator Ring ("e").
-        subgroup = gprefix .. "replicators",
-        order = "g",
+        -- v4.5.1: own POWER row (synthesizer "a", ring "b", chamber "c", coil "d"),
+        -- so the four machines of the dark-matter chain read in build order.
+        subgroup = gprefix .. "power",
+        order = "d",
         place_result = gprefix .. "annihilation-coil",
         stack_size = 20
     },

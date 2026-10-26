@@ -104,8 +104,8 @@ data:extend({
             }
         },
         icon_size = 64,
-        subgroup = gprefix .. "replicators",
-        order = "e",
+        subgroup = gprefix .. "power",
+        order = "b",
         place_result = gprefix .. "collider",
         stack_size = 20
     },

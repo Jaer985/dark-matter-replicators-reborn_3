@@ -40,9 +40,19 @@
 -- sin él, generate() no hace nada.
 local helpers = require("lib.helpers")
 local TimingModel = require("lib.timing-model")
+local RefinerLogic = require("lib.refiner-logic")
 local gprefix = "dmrsa-"
 
 local RefinerGenerator = {}
+
+-- Quality name -> level (0 for normal). data.raw.quality is the source of truth;
+-- the fallback table keeps the unit tests and older modlists working.
+local FALLBACK_LEVEL = { normal = 0, uncommon = 1, rare = 2, epic = 3, legendary = 5 }
+local function qlevel(name)
+    local q = data.raw.quality and data.raw.quality[name]
+    if q and type(q.level) == "number" then return q.level end
+    return FALLBACK_LEVEL[name] or 0
+end
 
 -- Escalones de calidad: probabilidad de éxito DECRECIENTE por escalón
 -- (el 1% del diseño original baja a la mitad en cada salto).
@@ -173,9 +183,10 @@ function RefinerGenerator.generate()
             end
 
             local base_energy = recipe.energy_required or 1
-            -- M6: min(3 x repl_time, 3600 s). The cap is applied to the TIME
-            -- here (the recipe's one owner) — see REFINER_MAX_CYCLE.
-            local cycle_time = math.max(1, math.min(base_energy * ENERGY_MULT, REFINER_MAX_CYCLE))
+            -- v4.7.1: one attempt per tier, 1-5 s (the author's call for the
+            -- automatic refiner). Same numbers as lib/refiner-logic.lua so the
+            -- two paths can never drift.
+            local cycle_time = RefinerLogic.cycle_seconds(base_energy)
             local loc_pref = get_loc_prefix(res.name)
 
             for _, step in ipairs(QUALITY_STEPS) do
@@ -214,8 +225,16 @@ function RefinerGenerator.generate()
                         { "quality-name." .. step.to }
                     },
                     energy_required = cycle_time,
+                    -- v4.7.1: `quality_min`/`quality_max` are the REAL gate in
+                    -- 2.1 (`ingredients[].quality` is decorative — a normal item
+                    -- could be pushed through the legendary step, the exploit the
+                    -- author reproduced). Both take a quality NAME (a number is
+                    -- rejected by the engine: "Value must be a string ...
+                    -- quality_min"), and setting min = max locks the input
+                    -- quality and disables the "Ingredient quality" selector.
                     ingredients = {
-                        { type = "item", name = res.name, amount = 1, quality = step.from }
+                        { type = "item", name = res.name, amount = 1,
+                          quality_min = step.from, quality_max = step.from }
                     },
                     results = {
                         -- Factorio 2.1: retry/success probabilities are

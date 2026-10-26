@@ -18,6 +18,7 @@ local helpers = require("lib.helpers")
 local CostSolver = require("lib.cost-solver")
 local TargetMapper = require("lib.target-mapper")
 local repltypes = require("lib.repltypes")
+local ItemClass = require("lib.item-class")
 local TimingModel = require("lib.timing-model")
 local gprefix = "dmrsa-"
 
@@ -51,9 +52,54 @@ end
 --     (3600 s) is not a target either. Strictly above: 3600 s stays.
 -- Returns the human-readable reason (for the ONE log line) or nil.
 -- Exported so dmr-tests/test_economy_invariants.lua can assert the rule.
+-- v4.5.1 — SELF-REPLICATION (v4.2 intent, restored).
+-- `lib/target-mapper.lua` has whitelisted dmrsa-replicator-1..5 as replication
+-- targets since the v4.2 original-mod study (the upstream mod ships
+-- `repltech_recipe(device3-5, upgrade = true)` — the player duplicates their own
+-- replicators instead of hand-building them). This predicate used to override
+-- that whitelist by name, so the whitelist was dead code and the machines never
+-- appeared. The five tiers are now exempt here; everything else (refiner,
+-- synthesizer, collider, annihilator) stays a non-target.
+local SELF_REPLICABLE = {}
+for i = 1, 5 do SELF_REPLICABLE[gprefix .. "replicator-" .. i] = true end
+
+-- v4.5.1: exposed so the C5 recycler-loop block can skip them too.
+function MirrorGenerator.is_self_replicable(name)
+    return type(name) == "string" and SELF_REPLICABLE[name] == true
+end
+
+-- ══ v4.5.1 — class floors (machines / military start at tier 2) ══
+-- A placeable item counts as a MACHINE when its entity is one of these types.
+-- Belts, splitters, undergrounds, inserters, pipes, poles, chests, walls,
+-- gates, lamps, rails and signals are deliberately absent: they are the
+-- "what you start with" content the Simple Replicator is for.
+local MACHINE_ENTITY_TYPES = {
+    ["assembling-machine"] = true, ["furnace"] = true, ["mining-drill"] = true,
+    ["boiler"] = true, ["generator"] = true, ["reactor"] = true, ["lab"] = true,
+    ["offshore-pump"] = true, ["pump"] = true, ["solar-panel"] = true,
+    ["accumulator"] = true, ["radar"] = true, ["roboport"] = true, ["beacon"] = true,
+    ["centrifuge"] = true, ["rocket-silo"] = true, ["storage-tank"] = true,
+    ["car"] = true, ["locomotive"] = true, ["cargo-wagon"] = true,
+    ["fluid-wagon"] = true, ["spider-vehicle"] = true, ["agricultural-tower"] = true,
+    ["heating-tower"] = true, ["fusion-reactor"] = true, ["fusion-generator"] = true,
+    ["asteroid-collector"] = true, ["thruster"] = true, ["space-platform-hub"] = true,
+    ["lightning-attractor"] = true, ["cargo-pod"] = true, ["rocket"] = false,
+}
+-- Ammo, guns, capsules (grenades, combat robots, defender pods) and armour.
+local MILITARY_ITEM_TYPES = {
+    ["ammo"] = true, ["gun"] = true, ["capsule"] = true, ["armor"] = true,
+    ["ammo-category"] = false, ["module"] = false,
+}
+-- Turrets and other combat buildings.
+local MILITARY_ENTITY_TYPES = {
+    ["ammo-turret"] = true, ["electric-turret"] = true, ["fluid-turret"] = true,
+    ["artillery-turret"] = true, ["wall"] = false, ["gate"] = false,
+}
+
 function MirrorGenerator.is_own_machine(name, prefix)
     if type(name) ~= "string" then return false end
     prefix = prefix or gprefix
+    if prefix == gprefix and SELF_REPLICABLE[name] then return false end
     local head = prefix .. "replicator"      -- replicator, -1..-5, -<planet>
     if name:sub(1, #head) == head then return true end
     for _, suffix in ipairs({ "refiner", "synthesizer", "collider", "annihilator" }) do
@@ -79,7 +125,10 @@ end
 
 local PACK_LEVELS = {
     ["automation-science-pack"] = 1,
-    ["logistic-science-pack"] = 1,
+    -- v4.5.1: logistic was 1 here while PACK_RUNGS scores it 2.0 (green science
+    -- unlocks tier-2 content). Aligned to 2 so the Simple Replicator holds
+    -- red-pack content only.
+    ["logistic-science-pack"] = 2,
     ["military-science-pack"] = 2,
     ["chemical-science-pack"] = 3,
     ["production-science-pack"] = 3,
@@ -686,6 +735,16 @@ function MirrorGenerator.generate()
     -- name -> { recipe_name, model_time, r } for every NON-fuel replication
     -- recipe: input of the C5 arbitrage clamp post-pass below.
     local repl_entries = {}
+    -- v4.5.1: entity name -> entity prototype type, for the class floors
+    -- (machines / military). data.raw is keyed by type, so an item's
+    -- `place_result` cannot be looked up directly.
+    local entity_type_of = {}
+    for etype in pairs(MACHINE_ENTITY_TYPES) do
+        for ename in pairs(data.raw[etype] or {}) do entity_type_of[ename] = etype end
+    end
+    for etype in pairs(MILITARY_ENTITY_TYPES) do
+        for ename in pairs(data.raw[etype] or {}) do entity_type_of[ename] = etype end
+    end
     -- name -> { t, r } for EVERY generated replication recipe (raws, fluids and
     -- fuels included): the parts bill of a recipe is the sum of these.
     local repl_cost = {}
@@ -740,6 +799,48 @@ function MirrorGenerator.generate()
         if tier > 5 then tier = 5 end
         if tier < 1 then tier = 1 end
 
+        -- ══ v4.5.1 — THE MACHINE TIER IS NOW THE TIME LADDER ══
+        -- The recipe TIME already comes from max(pack_tier, chain_tier) inside
+        -- the timing model, but the replicator that SHOWS the recipe was chosen
+        -- from the cost-solver tier alone. Everything unlocked by green or
+        -- military science whose ingredients happen to be cheap therefore landed
+        -- on the Simple Replicator: assembling-machine-2, chemical-plant,
+        -- oil-refinery, steel-furnace, gun-turret, grenades, piercing rounds...
+        -- (dump: 92 of 249 recipes in tier 1 on vanilla + Space Age).
+        -- Rule: machine tier = floor(max(chain_tier, pack_tier)).
+        --   * automation-only items score 1.5 in pack_tier_from_set → tier 1
+        --     (the Simple Replicator is the red-pack machine, as intended);
+        --   * green/military (2.0/2.1) → tier 2;
+        --   * chemical/production/utility (3.0-3.4) → tier 3; space → 5.
+        -- Only the CATEGORY moves; no price and no time changes.
+        local pack_tier_value = item_pack_tier(name)
+        local tier_cat = math.max(tier, math.floor(pack_tier_value + 1e-9))
+        if tier_cat > 5 then tier_cat = 5 end
+        if tier_cat < 1 then tier_cat = 1 end
+        -- ══ v4.5.1 — CLASS FLOORS: machines and military are not "simple" ══
+        -- The pack tier alone leaves mid-game machines on the Simple Replicator
+        -- when their unlocking technology is a TRIGGER tech (no research unit):
+        -- oil-processing (mine-entity) unlocks oil-refinery and chemical-plant,
+        -- electronics (craft-item) unlocks lab — all scored pack_tier 1.0 and
+        -- therefore landed in tier 1. Same for gun-turret, whose tech costs 10
+        -- automation packs only.
+        -- Author's rule (2026-10-24): the Simple Replicator is the RED-PACK
+        -- machine; machines and military start at tier 2.
+        local tier_floor = 0
+        if not MirrorGenerator.is_self_replicable(name) then
+            local item_proto_c = data.raw[target.type] and data.raw[target.type][name]
+            local place = item_proto_c and item_proto_c.place_result
+            -- data.raw is keyed by PROTOTYPE TYPE, not by entity name: the entity
+            -- a placeable item points at must be resolved through this index
+            -- (entity name -> its type) built once below.
+            local etype = place and entity_type_of[place]
+            local is_machine = etype ~= nil and MACHINE_ENTITY_TYPES[etype] == true
+            local is_military = MILITARY_ITEM_TYPES[target.type] == true
+                or (etype ~= nil and MILITARY_ENTITY_TYPES[etype] == true)
+            if is_machine or is_military then tier_floor = 2 end
+        end
+        if tier_cat < tier_floor then tier_cat = tier_floor end
+
         -- Planet routing. v4.2.2 (PR-2): structural signals FIRST
         -- (spoil → producer-SC → DIL), legacy keywords remain as fallback
         -- (batch-3 arms stay for one release — defense in depth), manual
@@ -764,7 +865,10 @@ function MirrorGenerator.generate()
         -- burn value than it costs (the C1 printer: uranium fuel cells at
         -- 88 MJ for 8 GJ) and an 11-55 hour craft is dead content. It stays
         -- manufacturable and is reported in the log + the receipt.
-        local fuel_class = TimingModel.is_burnable(item_proto)
+        -- v4.5.1: `is_fuel_class` = burnable AND above the accidental-burnable
+        -- floor (1 MJ). Token values (spoilage 250 kJ, tree seed 100 kJ) fall
+        -- back to the normal cost solver and never reach the duplication ladder.
+        local fuel_class = TimingModel.is_fuel_class(item_proto)
         if fuel_class and TimingModel.fuel_price_over_max(item_proto) then
             record_exclusion(name,
                 TimingModel.fuel_time(TimingModel.fuel_joules(item_proto.fuel_value)),
@@ -844,17 +948,23 @@ function MirrorGenerator.generate()
         end
 
         -- Category: VISUAL ONLY in v4.0 (no tier gating)
-        local item_category = get_item_category(name, target)
+        -- v4.5.1: structural classifier (lib/item-class.lua); the old
+        -- name-pattern get_item_category above is kept only for the
+        -- tech-icon border helper and is no longer authoritative.
+        local item_category = ItemClass.classify(name, target)
         local recipe_name = gprefix .. "repl-" .. name
         local loc_prefix = get_loc_prefix(name, target)
 
         local recipe_subgroup
-        if planet_suffix then
-            recipe_subgroup = gprefix .. "replication-resources"
-        elseif item_category and repltypes[item_category] then
+        -- v4.5.1: planet items keep their CATEGORY subgroup. The old code sent
+        -- every planet-routed recipe to "Replication resources", which is why
+        -- that row held 65 recipes (science packs from all four planets,
+        -- recyclers, soils...) and the picker looked unsorted. The planet gate
+        -- already comes from the machine category, not from the subgroup.
+        if item_category and repltypes[item_category] then
             recipe_subgroup = gprefix .. "replication-" .. item_category
         else
-            recipe_subgroup = gprefix .. "replication-tier-" .. tier
+            recipe_subgroup = gprefix .. "replication-tier-" .. tier_cat
         end
 
         local result_amount = 1
@@ -929,7 +1039,15 @@ function MirrorGenerator.generate()
         -- turn back into materials (and their "producing recipe" in the index
         -- is often a byproduct recipe — lava -> stone — which would invent a
         -- parts bill out of nothing).
-        local LADDER_SOURCES = { ["ladder"] = true, ["planet"] = true, ["pack-rung"] = true, ["replicator"] = true }
+        local LADDER_SOURCES = { ["ladder"] = true, ["planet"] = true, ["pack-rung"] = true }
+        -- v4.5.1 — `["replicator"]` REMOVED from the clamp on purpose.
+        -- The five DMR replicators are self-replication targets now (v4.2 intent,
+        -- restored). Their model price is their own tier (`TimingModel.REPLICATOR_TIERS`
+        -- → 6.32 / 12.64 / 25.28 / 50.56 / 101.12 s). Running the C5 parts-bill
+        -- clamp on them re-priced a machine by its own replication cost (a loop):
+        -- dump-measured 3695 s for tier 1 up to 15612 s for tier 5, which then
+        -- tripped the 3600 s ceiling and deleted them from the tree again. A
+        -- machine's parts bill IS itself, so the clamp is not applicable to it.
         -- Every generated recipe contributes to OTHER recipes' parts bills with
         -- its model time + machine R (raws and fuels included: 1 iron ore = 3 s
         -- at R = 1 is exactly what a parts bill must count). FLUIDS are marked
@@ -977,7 +1095,7 @@ function MirrorGenerator.generate()
         local category = MirrorGenerator.category_for({
             fuel = fuel_class,
             planet_suffix = planet_suffix,
-            tier = tier,
+            tier = tier_cat,
         })
         repl_recipe.categories = { category }
 
@@ -1030,7 +1148,7 @@ function MirrorGenerator.generate()
         else
             items[name] = {
                 recipe_name = recipe_name,
-                tier = tier,
+                tier = tier_cat,
                 target = target,
                 item_category = item_category,
             }
@@ -1213,7 +1331,8 @@ function MirrorGenerator.generate()
     -- coal, jelly) are excluded: their yield is 0.25 of themselves = no loop.
     -- Fuels stay excluded (F-2a: a parts bill must never re-price a burnable).
     for name, known in pairs(repl_cost) do
-        if not fix_entries[name] and not known.fluid and not known.fuel then
+        if not fix_entries[name] and not known.fluid and not known.fuel
+           and not MirrorGenerator.is_self_replicable(name) then
             local rec = data.raw.recipe[name .. "-recycling"]
             local res = rec and (rec.results or (rec.normal and rec.normal.results))
             if res then
