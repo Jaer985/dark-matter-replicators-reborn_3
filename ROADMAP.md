@@ -1,15 +1,34 @@
 # DMR — Roadmap
 
-_Estado del fork: Post 4.6 (Jaer985) — Base: Factorio 2.1 (solo 2.1 desde v4.0)_
-_Última publicada en portal: **4.7.1** (2026-10-24, 36 releases; 4.7.0 quedó sustituida). Gates sobre el zip: data stage 0 errores / 0 warnings, mapa headless creado con `control.lua` cargado y 0 errores, 9/9 suites. Descripción y FAQ del portal al día; anuncio y changelog de Discord verificados (con cabeceras de idioma)._
-_4.5.1: Replicadores auto-replicables (6,32/12,64/25,28/50,56/101,12 s) · techo de 1 MJ en la clase combustible (spoilage y semillas fuera del escalón de duplicación) · tier del replicador = max(cadena, pack) + suelo 2 para máquinas y militar (tier 1 vanilla 92 → 40) · cobre fundido 53,6 → 12,5 s · laboratorio de replicación researching_speed 2,0 · pestaña: subgrupo propio para la cadena de energía._
-_Pendiente inmediato: gate test en juego de 4.5.1 (replicador auto-replicable, tamaño del picker, pestaña) y, después, **4.6.0**: escalera del refinador por calidad de entrada + niveles de calidad de otros mods._
+_Estado del fork: Post 4.8 (Jaer985) — Base: Factorio 2.1 (solo 2.1 desde v4.0)_
+_Última publicada en portal: **4.8.0** (2026-10-26, 38 releases; 4.7.2 y 4.8.0 el mismo día). Cables de circuito en todas las máquinas DMR + arreglo del crash sin quality. Gates: `luac5.2` sobre el zip extraído, mapa headless creado con y sin Space Age, sha1 del portal == zip local. Descripción del portal, FAQ, README, AGENTS y anuncio+changelog de Discord al día._
+_Pendiente inmediato: gate test en juego de 4.8.0 (cable verde a un replicador en la GUI — lo único que no se puede verificar headless) y el gate test de 4.7.1/4.7.2 en la partida real._
 
 > El antiguo `roadmap.txt` del upstream (nihilistzsche / Honktown) está congelado en la era 0.17/0.18 y ya no aplica. Este documento es la fuente viva de planes para el fork moderno.
 
 ---
 
 ## ✅ Cerrado recientemente
+
+- **v4.8.0** (2026-10-26, publicado) — Cables de circuito en todas las máquinas DMR
+  - Petición del portal ("Make it connect to the logistics system"): sin cables, los replicadores no
+    servían para una mall ni para un blueprint parametrizado.
+  - Causa medida: todas las máquinas son `assembling-machine` pero ninguna declaraba
+    `circuit_wire_max_distance`; ausente = 0 → `connect_to()` devuelve false y `get_circuit_network()`
+    nil. **El conector existe igual** con distancia 0, así que "tiene conector" no prueba nada.
+  - Arreglo: una línea por entidad (`circuit_wire_max_distance = 9`) en replicadores, planetarios,
+    refinador, sintetizador y anillo acelerador.
+  - Verificado en 2.1.23: `connect_to` true, red existente, enable/disable configurable, y
+    `set_recipe("dmrsa-repl-iron-gear-wheel")` aceptada (274 recetas `dmrsa-repl-*` en un modlist SA).
+  - Conflicto con el refinador: **descartado con medición** — cambiar su receta vacía el inventario de
+    entrada, y sin item dentro `sync_recipe` no actúa. Se escribió un guard y se revirtió.
+  - Gate: `luac5.2` + mapa headless con y sin Space Age; sha1 del portal == zip local (`939f711e…`).
+
+- **v4.7.2** (2026-10-26, publicado) — Crash en modlists sin quality
+  - `on_init` lanzaba *Unknown entity name: dmrsa-refiner* (`control.lua:71`) porque `refiner.lua` hace
+    `return` cuando no hay prototipos de calidad y el script consultaba el nombre sin comprobarlo.
+  - Reportado por tikitarik en el portal; reproducido headless desactivando `quality` + `space-age`.
+    Arreglo: `if not prototypes.entity[REFINER] then return end`. Una partida base-only ya carga.
 
 - **v4.7.1** (2026-10-24, publicado) — Refinador de calidad: máquina de crafteo + autodetección de receta
   - La 4.6.x/4.7.0 no refinaba: una assembling-machine construye su inventario de entrada desde los
@@ -346,7 +365,7 @@ Implementado tal como se aprobó: la máquina ya no tiene recetas que elegir.
 ## 📋 Procedimiento de release (pipeline real 2026-08, ver skill dmr-github-publishing)
 
 1. Gate test en juego (Factorio 2.1, modlist real) → vaciar errores del log
-2. Bump `info.json` version + entrada ACUMULADA en `changelog.txt` (todo lo no publicado desde la última versión del portal — consultar la API, hoy 4.3.1)
+2. Bump `info.json` version + entrada ACUMULADA en `changelog.txt` (todo lo no publicado desde la última versión del portal — consultar la API, hoy **4.8.0**)
 3. Build zip con la convención (`dark-matter-replicators-reborn_X.Y.Z.zip`) + `check-no-private-data.py` (privacy CLEAN)
 4. Docs en una pasada: `mod-portal-description.md` actualizado (settings defaults, balance B2, features)
 5. GitHub push: clonar → sync → push (el source dir NO es repo git; el token de GitHub para Jaer985 vive en el `.env` del perfil Hermes — ver skill dmr-github-publishing)
@@ -354,10 +373,11 @@ Implementado tal como se aprobó: la máquina ya no tiene recetas que elegir.
 
 ---
 
-## 🎯 Prioridad inmediata (estado 2026-10-24, tras publicar 4.5.1)
+## 🎯 Prioridad inmediata (estado 2026-10-26, tras publicar 4.8.0)
 
-1. **Gate test 4.6.0 en juego**: meter un item en el refinador y verlo subir de nivel (ritmo 1-5 s por tier), el 1 % de pérdida, que no salta escalones y que el inventario de salida lo recoge un inserter.
-2. **Refinador automático — observaciones del gate test**: si el ritmo o la probabilidad se sienten mal en partida, se ajustan en `lib/refiner-logic.lua` (un número cada uno).
-3. **Cierre de B2** — validar con datos reales el spread de máquinas (1,5-3,5×) y el comportamiento planetario (40/80 MW); necesita el gate test, no se puede verificar headless.
-4. **Backlog técnico** — fixtures SA reales (foundry metallurgy, holmium, tungsten), documentar el patrón orphan-tech, refactor de `data-final-fixes.lua` en `prototypes/fixes/`, pasada de `gprefix` en `target-mapper.lua`.
-5. **Aparcado / futuro** — Yuoki (cuando esté en 2.1), PyMods (`script.on_load`), OmniMatter + tenemut-from-omnite, coste `expensive`, escenario standalone sin ores; Darkstar Utilities: línea borrada el 2026-10-24 (no existe en el portal ni en GitHub; fósil del upstream 0.17).
+1. **Gate test 4.8.0 en juego**: poner un cable verde a un replicador y comprobar que aparece el panel de circuito (enable/disable, leer contenido, leer receta, fijar receta) — es lo único que no se puede verificar headless.
+2. **Gate test 4.7.1/4.7.2 en partida real**: cargar una partida existente y, si se puede, una sin Space Age/quality (el caso que rompía).
+3. **Refinador automático — observaciones del gate test**: si el ritmo o la probabilidad se sienten mal en partida, se ajustan en `lib/refiner-logic.lua` (un número cada uno).
+4. **Cierre de B2** — validar con datos reales el spread de máquinas (1,5-3,5×) y el comportamiento planetario (40/80 MW); necesita el gate test, no se puede verificar headless.
+5. **Backlog técnico** — fixtures SA reales (foundry metallurgy, holmium, tungsten), documentar el patrón orphan-tech, refactor de `data-final-fixes.lua` en `prototypes/fixes/`, pasada de `gprefix` en `target-mapper.lua`.
+6. **Aparcado / futuro** — Yuoki (cuando esté en 2.1), PyMods (`script.on_load`), OmniMatter + tenemut-from-omnite, coste `expensive`, escenario standalone sin ores; Darkstar Utilities: línea borrada el 2026-10-24 (no existe en el portal ni en GitHub; fósil del upstream 0.17).
